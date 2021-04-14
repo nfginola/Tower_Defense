@@ -1,0 +1,1 @@
+- Delete examples folder in Irrlicht folder to cut the size in half

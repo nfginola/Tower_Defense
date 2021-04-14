@@ -440,7 +440,6 @@ void Game::Update(float dt)
 
     // VECTOR3 HAS AN INTERPOLATE FUNCTION!
 
-
     ICameraSceneNode* pcam = m_sMgr->getActiveCamera();
     core::vector3df nodePosition = pcam->getPosition();
     vector3df fwd;

@@ -63,6 +63,38 @@ public:
         else if (key == "R") return IsKeyDown(KEY_KEY_R);
         else if (key == "T") return IsKeyDown(KEY_KEY_T);
         else if (key == "Y") return IsKeyDown(KEY_KEY_Y);
+        else if (key == "U") return IsKeyDown(KEY_KEY_U);
+        else if (key == "I") return IsKeyDown(KEY_KEY_I);
+        else if (key == "O") return IsKeyDown(KEY_KEY_O);
+        else if (key == "P") return IsKeyDown(KEY_KEY_P);
+        else if (key == "F") return IsKeyDown(KEY_KEY_F);
+        else if (key == "G") return IsKeyDown(KEY_KEY_G);
+        else if (key == "H") return IsKeyDown(KEY_KEY_H);
+        else if (key == "J") return IsKeyDown(KEY_KEY_J);
+        else if (key == "K") return IsKeyDown(KEY_KEY_K);
+        else if (key == "L") return IsKeyDown(KEY_KEY_L);
+        else if (key == "Z") return IsKeyDown(KEY_KEY_Z);
+        else if (key == "X") return IsKeyDown(KEY_KEY_X);
+        else if (key == "C") return IsKeyDown(KEY_KEY_C);
+        else if (key == "V") return IsKeyDown(KEY_KEY_V);
+        else if (key == "B") return IsKeyDown(KEY_KEY_B);
+        else if (key == "N") return IsKeyDown(KEY_KEY_N);
+        else if (key == "M") return IsKeyDown(KEY_KEY_M);
+
+        else if (key == "1") return IsKeyDown(KEY_KEY_0);
+        else if (key == "2") return IsKeyDown(KEY_KEY_1);
+        else if (key == "3") return IsKeyDown(KEY_KEY_2);
+        else if (key == "4") return IsKeyDown(KEY_KEY_3);
+        else if (key == "5") return IsKeyDown(KEY_KEY_4);
+
+        else if (key == "6") return IsKeyDown(KEY_KEY_5);
+        else if (key == "7") return IsKeyDown(KEY_KEY_6);
+        else if (key == "8") return IsKeyDown(KEY_KEY_7);
+        else if (key == "9") return IsKeyDown(KEY_KEY_8);
+        else if (key == "0") return IsKeyDown(KEY_KEY_9);
+
+        else if (key == "LShift") return IsKeyDown(KEY_LSHIFT);
+
     }
 
     bool isLMBPressed()
@@ -116,6 +148,7 @@ struct WorldObject
     {
         std::cout << "Hello!\n";
     }
+    
 };
 
 class Game
@@ -130,10 +163,8 @@ private:
 	void Init();
 	void Update(float dt);
 
-    // For Lua
     ISceneNode* CastRay(const vector3df& start, vector3df dir);
-    std::string CastRayGetName(const vector3df& start, vector3df dir);
-
+  
 private:
 	lua_State* L = nullptr;
 
@@ -147,18 +178,9 @@ private:
 
     // Cam
 	ICameraSceneNode* m_mainCam = nullptr;
+    ISceneNode* highlightedSceneNode = nullptr;
 
     // FPS
     u32 then;
-
-    std::vector<WorldObject> m_objects;
-
-
-
-    // temp
-    //ISceneNode* enemy = nullptr;
-    //ISceneNode* house = nullptr;
-    ISceneNode* highlightedSceneNode = nullptr;
-
 };
 

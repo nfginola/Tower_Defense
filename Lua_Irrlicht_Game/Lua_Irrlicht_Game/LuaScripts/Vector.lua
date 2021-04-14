@@ -28,7 +28,7 @@ function Vector:__sub(vec)
 
     if (getmetatable(self) ~= Vector or 
         getmetatable(vec) ~= Vector) then 
-            error("A Vector can only be added to another Vector!") 
+            error("A Vector can only be subtracted by another Vector!") 
     end
     sumVec = Vector:new()   -- Get a new Vector that we will fill
     sumVec.x = self.x - vec.x

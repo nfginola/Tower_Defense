@@ -1,32 +1,11 @@
 #include "Game.h"
 
-
 enum
 {
     ID_IsNotPickable = 0,
     IDFlag_IsPickable = 1 << 0,
     IDFlag_IsHighlightable = 1 << 1
 };
-
-
-
-//ISceneNode* Game::player_cast_ray(ICameraSceneNode* from)
-//{
-//    core::line3d<f32> ray;
-//    ray.start = from->getPosition();
-//    ray.end = ray.start + (from->getTarget() - ray.start).normalize() * 1000.0f;
-//
-//    core::vector3df intersection;
-//    core::triangle3df hitTriangle;
-//       
-//    return m_collMan->getSceneNodeAndCollisionPointFromRay(
-//        ray,
-//        intersection,
-//        hitTriangle,
-//        IDFlag_IsPickable,
-//        0);
-//}
-
 
 namespace luaF
 {
@@ -109,8 +88,8 @@ namespace luaF
         WorldObject* wo = checkWO(L, 1);
         if (wo != nullptr)
         {
-            wo->mesh->setVisible(false);
-            wo->mesh->setID(0);
+            //wo->mesh->setVisible(false);
+            //wo->mesh->setID(0);
             wo->mesh->remove();
             delete wo;
             wo = nullptr;
@@ -142,8 +121,6 @@ namespace luaF
         wo->mesh->setID(ID_IsNotPickable);
         wo->mesh->setName(wo->name.c_str());
 
-        std::cout << "Sphere mesh assigned!\n";
-
         return 0;
     }
 
@@ -159,8 +136,6 @@ namespace luaF
         wo->mesh->setMaterialTexture(0, s_driver->getTexture("resources/textures/moderntile.jpg"));
         wo->mesh->setPosition(vector3df(10.5f, 0.f, 10.5f));      // Default cubes are 10 big
         wo->mesh->setName(wo->name.c_str());
-
-        std::cout << "Cube mesh assigned!\n";
 
         return 0;
     }
@@ -291,6 +266,7 @@ namespace luaF
 
 }
 
+
 ISceneNode* Game::CastRay(const vector3df& start, vector3df dir)
 {
     core::line3d<f32> ray;
@@ -308,25 +284,6 @@ ISceneNode* Game::CastRay(const vector3df& start, vector3df dir)
         0);
 
     return ret;
-}
-
-std::string Game::CastRayGetName(const vector3df& start, vector3df dir)
-{
-    core::line3d<f32> ray;
-    ray.start = start;
-    ray.end = ray.start + dir.normalize() * 1000.0f;
-
-    core::vector3df intersection;
-    core::triangle3df hitTriangle;
-
-    ISceneNode* ret = m_collMan->getSceneNodeAndCollisionPointFromRay(
-        ray,
-        intersection,
-        hitTriangle,
-        IDFlag_IsPickable,
-        0);
-
-    return ret->getName();
 }
 
 Game::Game() : then(0)
@@ -360,14 +317,14 @@ Game::Game() : then(0)
     L = luaL_newstate();
     luaL_openlibs(L);   // Open std libs
 
-    // Register World Object
+    // Register World Object representation
     {
         luaL_newmetatable(L, "mt_WorldObject");
 
-        luaL_Reg sWORegs[] =
+        luaL_Reg funcRegs[] =
         {
         { "new", luaF::createWO },
-        { "__gc", luaF::destroyWO },
+        //{ "__gc", luaF::destroyWO },
         { "deleteExplicit", luaF::destroyWO },
 
         { "test", luaF::woTest },
@@ -377,7 +334,7 @@ Game::Game() : then(0)
         { "addCasting", luaF::woAddTriSelector },
 
         { "setPosition", luaF::woSetPosition },
-        { "setScale", luaF::woSetScale },
+        { "setScale", luaF::woSetScale }, 
         { "setTexture", luaF::woSetTexture },
 
         { "getPosition", luaF::woGetPosition },
@@ -386,26 +343,26 @@ Game::Game() : then(0)
         { "collidesWith", luaF::woCollides  },
         { "drawLine", luaF::woDrawLine  },
         { "setPickable", luaF::woSetPickable },
+        
 
         { NULL, NULL }
         };
 
-        luaL_setfuncs(L, sWORegs, 0);
-
+        luaL_setfuncs(L, funcRegs, 0);
         lua_pushvalue(L, -1);
 
         lua_setfield(L, -1, "__index");
-        lua_setglobal(L, "WorldObject");
+        lua_setglobal(L, "CWorldObject");    // set the configured metatable to "CWorldObject"
     }
 
     // Register input functions
-    lua_register(L, "is_lmb_pressed", luaF::isLMBPressed);
-    lua_register(L, "is_key_down", luaF::isKeyDown);
-
+    lua_register(L, "isLMBpressed", luaF::isLMBPressed);
+    lua_register(L, "isKeyDown", luaF::isKeyDown);
    
     // Load scripts
     luaF::load_script(L, "Vector.lua");
-    luaF::load_script(L, "testscript.lua");
+    luaF::load_script(L, "WorldObject.lua");
+    luaF::load_script(L, "main.lua");
 }
 
 Game::~Game()
@@ -419,7 +376,7 @@ void Game::Run()
 
 	while (m_dev->run())
 	{
-        // Work out a frame delta time.
+        // Get delta time
         const u32 now = m_dev->getTimer()->getTime();
         const f32 dt = (f32)(now - then) / 1000.f;  // in sec
         then = now;
@@ -449,52 +406,6 @@ void Game::Init()
         m_mainCam->setID(ID_IsNotPickable);
     }
 
-    // Init cells
-    //{
-    //    constexpr int xLen = 7;
-    //    constexpr int zLen = 7;
-    //    for (int x = 0; x < xLen; ++x)
-    //    {
-    //        for (int z = 0; z < zLen; ++z)
-    //        {
-    //            scene::ISceneNode* cubeNode = m_sMgr->addCubeSceneNode();
-    //            cubeNode->setID(IDFlag_IsPickable);
-    //            cubeNode->setMaterialFlag(video::EMF_LIGHTING, false);
-    //            cubeNode->setMaterialTexture(0, m_driver->getTexture("resources/textures/moderntile.jpg"));
-    //            //cubeNode->setDebugDataVisible(irr::scene::EDS_BBOX);        // draw debug bb
-    //            cubeNode->setPosition(vector3df(x * 10.5f, 0.f, z * 10.5f));      // Default cubes are 10 big
-    //
-    //            // create and assign triangle selector for nodes
-    //            if (x < 5)
-    //            {
-    //                scene::ITriangleSelector* selector = 0;
-    //                selector = m_sMgr->createTriangleSelectorFromBoundingBox(cubeNode);
-    //                cubeNode->setTriangleSelector(selector);
-    //                selector->drop();
-    //            }
-    //
-    //        }
-    //    }
-    //}
-    
-    // Init base
-    //{
-    //    house = m_sMgr->addCubeSceneNode();
-    //    house->setID(ID_IsNotPickable);
-    //    house->setMaterialFlag(video::EMF_LIGHTING, false);
-    //    house->setMaterialTexture(0, m_driver->getTexture("resources/textures/modernbrick.jpg"));
-    //    house->setDebugDataVisible(irr::scene::EDS_BBOX);
-    //    house->setPosition(vector3df(6.f * 10.5f, 10.f, 0.f));
-    //    house->setScale({ 0.7, 1.3, 0.9 });
-    //}
-    
-    // Init enemy
-    //{
-    //    enemy = m_sMgr->addSphereSceneNode(2.f, 16, 0, 1, { -20.0, 10.0, 0.0 });
-    //    enemy->setMaterialFlag(video::EMF_LIGHTING, false);
-    //    enemy->setDebugDataVisible(irr::scene::EDS_BBOX);
-    //}
-
     // Get time now
     then = m_dev->getTimer()->getTime();
 }
@@ -517,7 +428,6 @@ void Game::Update(float dt)
 		lua_pushnumber(L, dt);
         luaF::pcall_p(L, 1, 0, 0);
 	}
-
 
     ICameraSceneNode* pcam = m_sMgr->getActiveCamera();
     core::vector3df nodePosition = pcam->getPosition();
@@ -560,74 +470,19 @@ void Game::Update(float dt)
 
     // Set player position
     pcam->setPosition(nodePosition);
-
-    //// Get distance to enemy from one specific tower
-    //{
-    //    ISceneNode* tow = m_sMgr->getSceneNodeFromName("tower1", 0);
-    //    float dist = 0.f;
-    //    if (enemy->isVisible() && tow)
-    //    {
-    //        dist = (tow->getAbsolutePosition() - enemy->getAbsolutePosition()).getLength();
-    //        if (dist < 20)
-    //        {
-    //            //std::cout << "Dist: " << dist << '\n';
-    //            //std::cout << "Select current enemy to shoot at!\n\n";
-    //            m_driver->setTransform(video::ETS_WORLD, core::IdentityMatrix);
-    //            m_driver->draw3DLine(tow->getAbsolutePosition(), enemy->getAbsolutePosition(), SColor(255, 255, 0, 0));
-    //        }
-    //    }
-    //}
     
-    // Check for collision with base
-    //{
-    //    if (enemy->isVisible() && house && house->getTransformedBoundingBox().intersectsWithBox(enemy->getTransformedBoundingBox()))
-    //    {
-    //        std::cout << "Lost HP!\n";
-    //        enemy->setVisible(false);
-    //        //enemy->drop();
-    //    }
-    //}
 
-    // Move enemy
-    //enemy->setPosition(enemy->getPosition() + vector3df(1.0, 0.0, 0.0) * MOVEMENT_SPEED / 2 * dt);
 
-    // Highlight scene nodes that are pickable (This can be here in C++)
+    // Highlight nodes that are pickable
     {
         if (highlightedSceneNode)
-        {
             highlightedSceneNode->setDebugDataVisible(0);   // reset debug bb
-        }
 
-        // Hit ray
         ISceneNode* selectedSceneNode = CastRay(m_mainCam->getPosition(), fwd);
         if (selectedSceneNode)
         {
             highlightedSceneNode = selectedSceneNode;
-            selectedSceneNode->setDebugDataVisible(irr::scene::EDS_BBOX);        // draw debug bb
-
-            if (m_evRec.IsKeyDown(EKEY_CODE::KEY_KEY_X))
-            {
-                selectedSceneNode->setMaterialTexture(0, m_driver->getTexture("resources/textures/modernbrick.jpg"));
-
-            }
-            /* if (m_evRec.isLMBPressed())
-            {
-                float x, y, z;
-                x = selectedSceneNode->getAbsolutePosition().X;
-                y = selectedSceneNode->getAbsolutePosition().Y;
-                z = selectedSceneNode->getAbsolutePosition().Z;
-                std::cout << x << ", " << y << ", " << z << '\n';
-
-                vector3df pos = selectedSceneNode->getAbsolutePosition();
-
-                scene::ISceneNode* tower = m_sMgr->addSphereSceneNode();
-                tower->setName("tower1");
-                tower->setID(IDFlag_IsPickable);
-                tower->setMaterialFlag(video::EMF_LIGHTING, false);
-                tower->setMaterialTexture(0, m_driver->getTexture("resources/textures/modernbrick.jpg"));
-                tower->setPosition(vector3df(pos.X, pos.Y + 10.0, pos.Z));
-                tower->setScale({ 0.5f, 2.f, 0.5f });
-            }*/
+            selectedSceneNode->setDebugDataVisible(irr::scene::EDS_BBOX);   // debug bb draw
         }
     }
 }

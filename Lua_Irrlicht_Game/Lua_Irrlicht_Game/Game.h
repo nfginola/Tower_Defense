@@ -22,8 +22,6 @@ public:
         if (event.EventType == irr::EET_KEY_INPUT_EVENT)
             m_keyIsDown[event.KeyInput.Key] = event.KeyInput.PressedDown;
 
-
-
         if (event.EventType == irr::EET_MOUSE_INPUT_EVENT)
         {
             switch (event.MouseInput.Event)
@@ -35,6 +33,14 @@ public:
             case EMIE_LMOUSE_LEFT_UP:
                 m_lmbPressed = false;
                 m_lmbDown = false;
+                break;
+            case EMIE_RMOUSE_PRESSED_DOWN:
+                m_rmbPressed = true;
+                m_rmbDown = true;
+                break;
+            case EMIE_RMOUSE_LEFT_UP:
+                m_rmbPressed = false;
+                m_rmbDown = false;
                 break;
 
             default:
@@ -109,6 +115,18 @@ public:
         return m_lmbDown;
     }
 
+    bool isRMBPressed()
+    {
+        bool toRet = m_rmbPressed;
+        m_rmbPressed = false;
+        return toRet;
+    }
+
+    bool isRMBDown()
+    {
+        return m_rmbDown;
+    }
+
     EventReceiver()
     {
         for (u32 i = 0; i < KEY_KEY_CODES_COUNT; ++i)
@@ -120,6 +138,9 @@ private:
 
     bool m_lmbPressed = false;
     bool m_lmbDown = false;
+
+    bool m_rmbPressed = false;
+    bool m_rmbDown = false;
 };
 
 struct LinInterpMover
@@ -128,7 +149,7 @@ struct LinInterpMover
 	float elapsed_time = 0.f;
 	float max_time = 0.f;
 
-	void moveThisFrame(float dt);
+	bool moveThisFrame(float dt);
 	void assignNextMove(vector3df start, vector3df end, float max_time);
 
 };
@@ -147,6 +168,16 @@ struct WorldObject
     void Test()
     {
         std::cout << "Hello!\n";
+    }
+
+    void Update(float dt)
+    {
+        if (mover.moveThisFrame(dt))
+        {
+            // If move done
+            // call lua assignNextCoroutine which in turn calls assignNextMove
+        }
+
     }
     
 };

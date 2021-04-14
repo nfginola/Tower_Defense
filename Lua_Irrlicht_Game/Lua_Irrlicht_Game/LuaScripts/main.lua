@@ -3,7 +3,7 @@ WorldObject = require("LuaScripts/WorldObject")
 
 base = nil
 tower_gid = 0
-cell_gid = 0
+--cell_gid = 0
 enemy_gid = 0
 
 towers = {}
@@ -13,7 +13,6 @@ enemies = {}
 occupied_cells = {} -- temp
 
 enemies_to_delete = {}
-towers_to_delete = {}
 
 castTargetName = nil
 
@@ -22,15 +21,55 @@ castTargetName = nil
 
 -- print(v1 + v2)
 
+--[[
+    Idea:
+
+Tower inherits from WorldObject
+- damage attr
+- attackspeed attr
+
+Base inherits form WorldObject
+
+Enemy inherits from WorldObject
+- hp attr
+- speed attr
+- damage (to base) attr
+
+Cell is a CONTAINER that has:
+- Cell WorldObject
+- Inhabitant WorldObject (Tower)
+- occupied bool
+- TYPE: "Placeable", "Invalid", "Waypoint", "Base" (?)
+
+x Cell has easy functions:
+Cell.placeTower()
+Cell.removeTower()
+Cell.placeBase() : note, only one global base! this is just to make it easy
+
+
+
+
+-------------
+
+tower.attack(enemy) --> (inside) enemy.takeDamage(tower.damage)
+
+-------------
+
+Tower 1 Selected --> LMB --> Find the cell --> Check if it is Occupied --> If not, create tower there, if it is: Print occupied
+
+
+
+]]
+
 function createTowerOn(cell)
-    towers[tower_gid] = WorldObject:new(string.format("tg%f", tower_gid))
+    towers[tower_gid] = WorldObject:new(string.format("tg%i", tower_gid))
     towers[tower_gid].cRep:addSphereMesh()
     towers[tower_gid].cRep:setPickable()
-    towers[tower_gid].cRep:setScale(0.5, 2, 0.5);
+    towers[tower_gid].cRep:setScale(0.6, 1.5, 0.6);
     towers[tower_gid].cRep:setTexture("resources/textures/modernbrick.jpg")
 
-    local x, y, z = cell.cRep:getPosition()
-    towers[tower_gid].cRep:setPosition(x, y + 10.0, z)
+    local cellPos = cell:getPosition()
+    towers[tower_gid].cRep:setPosition(cellPos.x, cellPos.y + 10.0, cellPos.z)
 
     tower_gid = tower_gid + 1
 end
@@ -47,27 +86,30 @@ function createBaseOn(cell)
 end
 
 
-
 function init()
     print("[LUA]: Init")
 
+    io.write("Enter desired X and Z dimensions of the level:\n")
+    xLen = io.read("*n")
+    zLen = io.read("*n")
+
     -- Init cells (addCubeSceneNodes)
-    for i = 1, 7 do
+    for i = 1, xLen do
         cells[i] = {}
-        for u = 1, 7 do
-            local id = string.format("cg%i", cell_gid)
+        for u = 1, zLen do
+            local id = string.format("cg%i%i", i, u)
             cells[id] = WorldObject:new(id)
             cells[id].cRep:addCubeMesh()
             cells[id]:setPosition((i - 1) * 10.5, 0.0, (u - 1) * 10.5)
             cells[id].cRep:setTexture("resources/textures/moderntile.jpg")
             cells[id].cRep:addCasting()
             cells[id].cRep:setPickable()
-            cell_gid = cell_gid + 1
+            --cell_gid = cell_gid + 1
             print(id)
         end
     end
 
-    createBaseOn(cells["cg42"])
+    createBaseOn(cells[string.format("cg%i%i", xLen, 1)])
 
 
 end
@@ -104,7 +146,7 @@ function update(dt)
         end
 
         -- Check collisions Enemy vs Base
-        if (enemy.cRep:collidesWith(base.cRep)) then
+        if (enemy:collidesWith(base)) then
             print("[LUA]: Lost HP!") -- Should call some "Base:takeDamage"
             enemies_to_delete[k] = true
         end
@@ -125,5 +167,10 @@ function update(dt)
         else
             print("Cell occupied!")
         end
+    end
+
+    -- Remove tower?
+    if (isRMBpressed()) then
+        print("RMB pressed!")
     end
 end

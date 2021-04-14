@@ -256,6 +256,14 @@ namespace luaF
         return 1;
     }
 
+    int isRMBPressed(lua_State* L)
+    {
+        bool rmbPressed = s_evRec->isRMBPressed();
+
+        lua_pushboolean(L, rmbPressed);
+        return 1;
+    }
+
     int isKeyDown(lua_State* L)
     {
         std::string key = lua_tostring(L, -1);
@@ -357,6 +365,7 @@ Game::Game() : then(0)
 
     // Register input functions
     lua_register(L, "isLMBpressed", luaF::isLMBPressed);
+    lua_register(L, "isRMBpressed", luaF::isRMBPressed);
     lua_register(L, "isKeyDown", luaF::isKeyDown);
    
     // Load scripts
@@ -428,6 +437,9 @@ void Game::Update(float dt)
 		lua_pushnumber(L, dt);
         luaF::pcall_p(L, 1, 0, 0);
 	}
+
+    // VECTOR3 HAS AN INTERPOLATE FUNCTION!
+
 
     ICameraSceneNode* pcam = m_sMgr->getActiveCamera();
     core::vector3df nodePosition = pcam->getPosition();

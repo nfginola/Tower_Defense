@@ -32,6 +32,10 @@ function WorldObject:setPosition(x, y, z)
     self.cRep:setPosition(x, y, z)
 end
 
+function WorldObject:collidesWith(rh)
+    return self.cRep:collidesWith(rh.cRep)
+end
+
 
 function WorldObject:__tostring()
     str = string.format("WorldObject Pos (%f, %f, %f)", self.pos.x, self.pos.y, self.pos.z)

@@ -1,5 +1,6 @@
 Vector = require("LuaScripts/Vector")
 WorldObject = require("LuaScripts/WorldObject")
+Camera = require("LuaScripts/Camera")
 
 base = nil
 tower_gid = 0
@@ -12,9 +13,11 @@ enemies = {}
 
 occupied_cells = {} -- temp
 
-enemies_to_delete = {}
+enemies_to_delete = {}  
 
-castTargetName = nil
+-- Create FPS cam
+cam = Camera:new()
+cam:createFPSCam()
 
 -- v1 = Vector:new({ x = 1, z = 5})
 -- v2 = Vector:new({x = 3, y = 2})
@@ -47,6 +50,11 @@ Cell.removeTower()
 Cell.placeBase() : note, only one global base! this is just to make it easy
 
 
+WAY TO SOLVE THE AMOUNT OF TOWER VS ENEMY CHECKING!
+
+1) Translate the Enemy position to its nearest Cell
+2) Compare cell distance to tower first
+
 
 
 -------------
@@ -57,19 +65,25 @@ tower.attack(enemy) --> (inside) enemy.takeDamage(tower.damage)
 
 Tower 1 Selected --> LMB --> Find the cell --> Check if it is Occupied --> If not, create tower there, if it is: Print occupied
 
-
-
 ]]
 
 function createTowerOn(cell)
     towers[tower_gid] = WorldObject:new(string.format("tg%i", tower_gid))
-    towers[tower_gid].cRep:addSphereMesh()
+    towers[tower_gid].cRep:addSphereMesh(5)
     towers[tower_gid].cRep:setPickable()
     towers[tower_gid].cRep:setScale(0.6, 1.5, 0.6);
     towers[tower_gid].cRep:setTexture("resources/textures/modernbrick.jpg")
 
     local cellPos = cell:getPosition()
     towers[tower_gid].cRep:setPosition(cellPos.x, cellPos.y + 10.0, cellPos.z)
+
+    yeah = WorldObject:new(string.format("tg%i", tower_gid))
+    yeah.cRep:addSphereMesh(20)
+    yeah.cRep:setScale(1, 0.1, 1);
+    yeah.cRep:setTexture("resources/textures/green.png")
+    yeah.cRep:setTransparent()
+
+    yeah.cRep:setPosition(cellPos.x, cellPos.y + 10.0, cellPos.z)
 
     tower_gid = tower_gid + 1
 end
@@ -85,7 +99,6 @@ function createBaseOn(cell)
     base.cRep:toggleBB()
 end
 
-
 function init()
     print("[LUA]: Init")
 
@@ -97,7 +110,7 @@ function init()
     for i = 1, xLen do
         cells[i] = {}
         for u = 1, zLen do
-            local id = string.format("cg%i%i", i, u)
+            local id = string.format("cg%i,%i", i, u)
             cells[id] = WorldObject:new(id)
             cells[id].cRep:addCubeMesh()
             cells[id]:setPosition((i - 1) * 10.5, 0.0, (u - 1) * 10.5)
@@ -109,13 +122,30 @@ function init()
         end
     end
 
-    createBaseOn(cells[string.format("cg%i%i", xLen, 1)])
+    createBaseOn(cells[string.format("cg%i,%i", xLen, 1)])
 
 
 end
 
+time = 0
+
 function update(dt)
-    --> Extra todo: Print Cell Type and Status (Inhabited or not)
+    -- TO DO:
+    -- Tower rep (inherit WO)
+    -- Enemy rep (inherit WO)
+    -- Cell rep container (with Tower or Base inhabitant)
+
+    -- Move camera with default FPS cam settings
+    cam:move(dt)
+
+    -- Cast ray and get target cell
+    castTargetName = cam:castRayForward()
+    time = time + dt
+    if (time >= 0.5) then
+        print(castTargetName)
+        time = 0
+    end
+
 
     -- Create enemy
     if (isKeyDown("K")) then
@@ -138,11 +168,17 @@ function update(dt)
         -- Draw line between each enemy and each tower when in range
         for a, tower in pairs(towers) do
             local towerPos = tower:getPosition()
-            local lenTE = (enemyPos - towerPos):length()
 
-            if (lenTE <= 30) then
-                enemy.cRep:drawLine(tower.cRep)
-            end
+            -- if (math.abs(enemyPos.x - towerPos.x) < 30) and
+            --     (math.abs(enemyPos.y - towerPos.y) < 30) and
+            --     (math.abs(enemyPos.z - towerPos.z) < 30) 
+            --     then
+                -- no need to fix this now (unless critical)
+                local lenTE = (enemyPos - towerPos):length()
+                if (lenTE <= 30) then
+                    enemy.cRep:drawLine(tower.cRep)
+                end
+            -- end
         end
 
         -- Check collisions Enemy vs Base
@@ -154,7 +190,7 @@ function update(dt)
 
     -- Remove to deletes
     for k, delete in pairs(enemies_to_delete) do
-        enemies[k].cRep:deleteExplicit()
+        enemies[k].cRep:removeNode()
         enemies[k] = nil
     end
     enemies_to_delete = {}  -- reset
@@ -168,8 +204,7 @@ function update(dt)
             print("Cell occupied!")
         end
     end
-
-    -- Remove tower?
+    
     if (isRMBpressed()) then
         print("RMB pressed!")
     end

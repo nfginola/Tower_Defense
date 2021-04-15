@@ -177,9 +177,12 @@ struct WorldObject
             // If move done
             // call lua assignNextCoroutine which in turn calls assignNextMove
         }
-
     }
-    
+};
+
+struct Camera
+{
+    ICameraSceneNode* sceneCam = nullptr;
 };
 
 class Game

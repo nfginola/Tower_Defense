@@ -9,9 +9,20 @@ enum
 
 namespace luaF
 {
+    // old
+    /* WorldObject* checkWO(lua_State* L, int n)
+     {
+         void* ptr = luaL_testudata(L, n, "mt_WorldObject");
+         WorldObject* wo = nullptr;
+         if (ptr != nullptr)
+             wo = *(WorldObject**)ptr;
+         return wo;
+     }*/
+
     static ISceneManager* s_sMgr = nullptr;
     static EventReceiver* s_evRec = nullptr;
     static IVideoDriver* s_driver = nullptr;
+    static ISceneCollisionManager* s_collMan = nullptr;
 
     bool check_lua(lua_State* L, int r)
     {
@@ -55,16 +66,18 @@ namespace luaF
         }
     }
 
-    WorldObject* checkWO(lua_State* L, int n)
+    // Check user data from stack
+    template<typename T>
+    T* checkObject(lua_State* L, int n, const std::string& metatable)
     {
-        WorldObject* wo = nullptr;
-
-        void* ptr = luaL_testudata(L, n, "mt_WorldObject");
-
+        void* ptr = luaL_testudata(L, n, metatable.c_str());
+        T* obj = nullptr;
         if (ptr != nullptr)
-            wo = *(WorldObject**)ptr;
-        return wo;
+            obj = *(T**)ptr;
+        return obj;
     }
+
+    // World object
     int createWO(lua_State* L)
     {
         std::string name = lua_tostring(L, -1);
@@ -78,29 +91,43 @@ namespace luaF
             lua_setmetatable(L, -2);
 
         }
-        else {
-            // error
-        }
+        else
+            throw std::runtime_error("No name assigned to WorldObject at creation!");
         return 1;
     }
+    // destroy irrlicht node
     int destroyWO(lua_State* L)
     {
-        WorldObject* wo = checkWO(L, 1);
+        WorldObject* wo = checkObject<WorldObject>(L, 1, "mt_WorldObject");
         if (wo != nullptr)
         {
-            //wo->mesh->setVisible(false);
-            //wo->mesh->setID(0);
             wo->mesh->remove();
-            delete wo;
-            wo = nullptr;
+            wo->mesh = nullptr;
         }
-        std::cout << "[C++] Deleted WO\n";
+        std::cout << "[C++]: Node removed!\n";
+        return 0;
+    }   
+    int deallocateWO(lua_State* L)
+    {
+        WorldObject* wo = checkObject<WorldObject>(L, 1, "mt_WorldObject");
+
+        if (wo != nullptr)
+        {
+            if (wo->mesh != nullptr)
+            {
+                wo->mesh->remove();
+                wo->mesh = nullptr;
+            }
+            delete wo;
+        }
+        std::cout << "[C++]: WO deallocated!\n";
+
         return 0;
     }
 
     int woTest(lua_State* L)
     {
-        WorldObject* wo = checkWO(L, 1);
+        WorldObject* wo = checkObject<WorldObject>(L, 1, "mt_WorldObject");
         wo->Test();
 
 
@@ -109,14 +136,14 @@ namespace luaF
 
     int woAddSphereMesh(lua_State* L)
     {
-        WorldObject* wo = checkWO(L, 1);
+        WorldObject* wo = checkObject<WorldObject>(L, 1, "mt_WorldObject");
 
-        float rad = lua_tonumber(L, -1);
+        float rad = lua_tonumber(L, 2);
         if (rad == 0.f) rad = 1.f;
         
         if (wo->mesh != nullptr) wo->mesh->drop();
         wo->pos = vector3df(0.0, 0.0, 0.0);
-        wo->mesh = s_sMgr->addSphereSceneNode(3.f, 16, 0, -1, wo->pos);
+        wo->mesh = s_sMgr->addSphereSceneNode(rad, 16, 0, -1, wo->pos);
         wo->mesh->setMaterialFlag(video::EMF_LIGHTING, false);
         wo->mesh->setID(ID_IsNotPickable);
         wo->mesh->setName(wo->name.c_str());
@@ -126,7 +153,7 @@ namespace luaF
 
     int woAddCubeMesh(lua_State* L)
     {
-        WorldObject* wo = checkWO(L, 1);
+        WorldObject* wo = checkObject<WorldObject>(L, 1, "mt_WorldObject");
 
         if (wo->mesh != nullptr) wo->mesh->drop();
 
@@ -142,7 +169,7 @@ namespace luaF
 
     int woAddTriSelector(lua_State* L)
     {
-        WorldObject* wo = checkWO(L, 1);
+        WorldObject* wo = checkObject<WorldObject>(L, 1, "mt_WorldObject");
 
         scene::ITriangleSelector* selector = 0;
         selector = s_sMgr->createTriangleSelectorFromBoundingBox(wo->mesh);
@@ -154,7 +181,7 @@ namespace luaF
 
     int woSetPosition(lua_State* L)
     {
-        WorldObject* wo = checkWO(L, 1);
+        WorldObject* wo = checkObject<WorldObject>(L, 1, "mt_WorldObject");
 
         float x = lua_tonumber(L, -3);
         float y = lua_tonumber(L, -2);
@@ -170,7 +197,7 @@ namespace luaF
 
     int woSetScale(lua_State* L)
     {
-        WorldObject* wo = checkWO(L, 1);
+        WorldObject* wo = checkObject<WorldObject>(L, 1, "mt_WorldObject");
 
         float x = lua_tonumber(L, -3);
         float y = lua_tonumber(L, -2);
@@ -183,7 +210,7 @@ namespace luaF
 
     int woSetTexture(lua_State* L)
     {
-        WorldObject* wo = checkWO(L, 1);
+        WorldObject* wo = checkObject<WorldObject>(L, 1, "mt_WorldObject");
 
         io::path fpath = lua_tostring(L, -1);
         wo->mesh->setMaterialTexture(0, s_driver->getTexture(fpath));
@@ -191,9 +218,17 @@ namespace luaF
         return 0;
     }
 
+    int woSetTransparent(lua_State* L)
+    {
+        WorldObject* wo = checkObject<WorldObject>(L, 1, "mt_WorldObject");
+
+        wo->mesh->setMaterialType(EMT_TRANSPARENT_ADD_COLOR);
+        return 0;
+    }
+
     int woGetPosition(lua_State* L)
     {
-        WorldObject* wo = checkWO(L, 1);
+        WorldObject* wo = checkObject<WorldObject>(L, 1, "mt_WorldObject");
 
         lua_pushnumber(L, wo->pos.X);
         lua_pushnumber(L, wo->pos.Y);
@@ -204,7 +239,7 @@ namespace luaF
 
     int woToggleBB(lua_State* L)
     {
-        WorldObject* wo = checkWO(L, 1);
+        WorldObject* wo = checkObject<WorldObject>(L, 1, "mt_WorldObject");
 
         if (wo->bbVisible)
         {
@@ -221,7 +256,7 @@ namespace luaF
 
     int woSetPickable(lua_State* L)
     {
-        WorldObject* wo = checkWO(L, 1);
+        WorldObject* wo = checkObject<WorldObject>(L, 1, "mt_WorldObject");
 
         wo->mesh->setID(IDFlag_IsPickable);
         return 0;
@@ -229,8 +264,8 @@ namespace luaF
 
     int woCollides(lua_State* L)
     {
-        WorldObject* wo1 = checkWO(L, 2);
-        WorldObject* wo2 = checkWO(L, 1);
+        WorldObject* wo1 = checkObject<WorldObject>(L, 2, "mt_WorldObject");
+        WorldObject* wo2 = checkObject<WorldObject>(L, 1, "mt_WorldObject");
 
         bool intersects = wo1->mesh->getTransformedBoundingBox().intersectsWithBox(wo2->mesh->getTransformedBoundingBox());
         lua_pushboolean(L, intersects);
@@ -239,14 +274,14 @@ namespace luaF
 
     int woDrawLine(lua_State* L)
     {
-        WorldObject* wo1 = checkWO(L, 2);
-        WorldObject* wo2 = checkWO(L, 1);
+        WorldObject* wo1 = checkObject<WorldObject>(L, 2, "mt_WorldObject");
+        WorldObject* wo2 = checkObject<WorldObject>(L, 1, "mt_WorldObject");
 
         s_driver->setTransform(video::ETS_WORLD, core::IdentityMatrix);
         s_driver->draw3DLine(wo1->mesh->getAbsolutePosition(), wo2->mesh->getAbsolutePosition(), SColor(255, 255, 0, 0));
         return 0;
     }
-
+    
     // Input
     int isLMBPressed(lua_State* L)
     {
@@ -272,26 +307,178 @@ namespace luaF
         return 1;
     }
 
-}
+    // Utility (Non Lua Func)
+    ISceneNode* irrlichtCastRay(const vector3df& start, vector3df dir)
+    {
+        core::line3d<f32> ray;
+        ray.start = start;
+        ray.end = ray.start + dir.normalize() * 1000.0f;
+
+        core::vector3df intersection;
+        core::triangle3df hitTriangle;
+
+        ISceneNode* ret = s_collMan->getSceneNodeAndCollisionPointFromRay(
+            ray,
+            intersection,
+            hitTriangle,
+            IDFlag_IsPickable,
+            0);
+
+        return ret;
+    }
+
+    // Camera
+    int createCamera(lua_State* L)
+    {
+        Camera** cam = reinterpret_cast<Camera**>(lua_newuserdata(L, sizeof(Camera*)));
+        *cam = new Camera;
+
+        luaL_getmetatable(L, "mt_Camera");
+        lua_setmetatable(L, -2);
+
+        std::cout << "Camera allocated!\n";
+
+        return 1;
+    }
+
+    int deallocateCamera(lua_State* L)
+    {
+        Camera* cam = checkObject<Camera>(L, 1, "mt_Camera");
+
+        if (cam != nullptr)
+            delete cam;
+        std::cout << "[C++]: Camera deallocated!\n";
+
+        return 0;
+    }
+
+    int camCreateFPS(lua_State* L)
+    {
+        Camera* cam = checkObject<Camera>(L, 1, "mt_Camera");
+
+        if (cam != nullptr)
+        {
+            cam->sceneCam = s_sMgr->addCameraSceneNodeFPS();
+            cam->sceneCam->setPosition({ 20, 5, -5 });
+            cam->sceneCam->setID(ID_IsNotPickable);
+        }
+
+        return 0;
+    }
+
+    int camSetPosition(lua_State* L)
+    {
+        Camera* cam = checkObject<Camera>(L, 1, "mt_Camera");
+
+        float x = lua_tonumber(L, -3);
+        float y = lua_tonumber(L, -2);
+        float z = lua_tonumber(L, -1);
+        cam->sceneCam->setPosition(vector3df(x, y, z));
+
+        return 0;
+    }
+
+    int camGetPosition(lua_State* L)
+    {
+        Camera* cam = checkObject<Camera>(L, 1, "mt_Camera");
+
+        if (cam != nullptr)
+        {
+            lua_pushnumber(L, cam->sceneCam->getAbsolutePosition().X);
+            lua_pushnumber(L, cam->sceneCam->getAbsolutePosition().Y);
+            lua_pushnumber(L, cam->sceneCam->getAbsolutePosition().Z);
+        }
+
+        return 3;
+    }
+
+    int camGetRightVec(lua_State* L)
+    {
+        Camera* cam = checkObject<Camera>(L, 1, "mt_Camera");
+
+        if (cam != nullptr)
+        {
+            // the world dirs are in COLUMNS (remember transpose of WM)
+            const matrix4& mat = cam->sceneCam->getViewMatrix();
+
+            // normalize incase its not orthonormal (it should be :))
+            vector3df rightVec = vector3df(mat[0], mat[4], mat[8]).normalize();
+
+            lua_pushnumber(L, rightVec.X);
+            lua_pushnumber(L, rightVec.Y);
+            lua_pushnumber(L, rightVec.Z);
+        }
+        return 3;
+    }
+
+    int camGetUpVec(lua_State* L)
+    {
+        Camera* cam = checkObject<Camera>(L, 1, "mt_Camera");
+
+        if (cam != nullptr)
+        {
+            vector3df upVec = cam->sceneCam->getUpVector();
+
+            lua_pushnumber(L, upVec.X);
+            lua_pushnumber(L, upVec.Y);
+            lua_pushnumber(L, upVec.Z);
+        }
+        return 3;
+    }
+
+    int camGetForwardVec(lua_State* L)
+    {
+        Camera* cam = checkObject<Camera>(L, 1, "mt_Camera");
+
+        if (cam != nullptr)
+        {
+            const matrix4& mat = cam->sceneCam->getViewMatrix();
+            vector3df forwardVec = vector3df(mat[2], mat[6], mat[10]).normalize();
+
+            lua_pushnumber(L, forwardVec.X);
+            lua_pushnumber(L, forwardVec.Y);
+            lua_pushnumber(L, forwardVec.Z);
+
+            /*
+            --> in i lua 
+            --> create vec
+            --> return vec
+            
+            */
+        }
+        return 3;
+    }
+
+    int camCastRay(lua_State* L)
+    {
+        Camera* cam = checkObject<Camera>(L, 1, "mt_Camera");
+
+        if (cam != nullptr)
+        {
+            static ISceneNode* highlightedSceneNode = nullptr;
+
+            if (highlightedSceneNode)
+                highlightedSceneNode->setDebugDataVisible(0);   // reset debug bb
 
 
-ISceneNode* Game::CastRay(const vector3df& start, vector3df dir)
-{
-    core::line3d<f32> ray;
-    ray.start = start;
-    ray.end = ray.start + dir.normalize() * 1000.0f;
+            // get fwd
+            const matrix4& mat = cam->sceneCam->getViewMatrix();
+            vector3df forwardVec = vector3df(mat[2], mat[6], mat[10]).normalize();
 
-    core::vector3df intersection;
-    core::triangle3df hitTriangle;
+            std::string hitName = "";
+            ISceneNode* selectedSceneNode = irrlichtCastRay(cam->sceneCam->getAbsolutePosition(), forwardVec);
+            if (selectedSceneNode)
+            {
+                highlightedSceneNode = selectedSceneNode;
+                hitName = highlightedSceneNode->getName();
+                selectedSceneNode->setDebugDataVisible(irr::scene::EDS_BBOX);   // debug bb draw
+            }
 
-    ISceneNode* ret = m_collMan->getSceneNodeAndCollisionPointFromRay(
-        ray,
-        intersection,
-        hitTriangle,
-        IDFlag_IsPickable,
-        0);
-
-    return ret;
+            lua_pushstring(L, hitName.c_str());
+        }
+        return 1;
+       
+    }
 }
 
 Game::Game() : then(0)
@@ -316,14 +503,17 @@ Game::Game() : then(0)
         m_sMgr = m_dev->getSceneManager();
         m_guiEnv = m_dev->getGUIEnvironment();
         m_collMan = m_sMgr->getSceneCollisionManager();
+
+        // Setup statics for Lua usage
         luaF::s_sMgr = m_sMgr;
         luaF::s_evRec = &m_evRec;
         luaF::s_driver = m_driver;
+        luaF::s_collMan = m_collMan;
     }
     
     // Init lua state
     L = luaL_newstate();
-    luaL_openlibs(L);   // Open std libs
+    luaL_openlibs(L);   // Open commonly used libs
 
     // Register World Object representation
     {
@@ -332,8 +522,8 @@ Game::Game() : then(0)
         luaL_Reg funcRegs[] =
         {
         { "new", luaF::createWO },
-        //{ "__gc", luaF::destroyWO },
-        { "deleteExplicit", luaF::destroyWO },
+        { "__gc", luaF::deallocateWO },
+        { "removeNode", luaF::destroyWO },
 
         { "test", luaF::woTest },
 
@@ -344,13 +534,15 @@ Game::Game() : then(0)
         { "setPosition", luaF::woSetPosition },
         { "setScale", luaF::woSetScale }, 
         { "setTexture", luaF::woSetTexture },
+        { "setPickable", luaF::woSetPickable },
+        { "setTransparent", luaF::woSetTransparent  },
 
         { "getPosition", luaF::woGetPosition },
 
         { "toggleBB", luaF::woToggleBB  },
         { "collidesWith", luaF::woCollides  },
         { "drawLine", luaF::woDrawLine  },
-        { "setPickable", luaF::woSetPickable },
+
         
 
         { NULL, NULL }
@@ -363,14 +555,44 @@ Game::Game() : then(0)
         lua_setglobal(L, "CWorldObject");    // set the configured metatable to "CWorldObject"
     }
 
+    // Register Camera representation
+    {
+        luaL_newmetatable(L, "mt_Camera");
+
+        luaL_Reg funcRegs[] =
+        {
+        { "new", luaF::createCamera },
+        { "__gc", luaF::deallocateCamera },
+
+        { "setPosition", luaF::camSetPosition },
+        { "createFPSCam", luaF::camCreateFPS },
+
+        { "getRightVec", luaF::camGetRightVec },
+        { "getForwardVec", luaF::camGetForwardVec },
+        { "getUpVec", luaF::camGetUpVec },
+        { "getPosition", luaF::camGetPosition },
+
+        { "castRayForward", luaF::camCastRay },
+
+        { NULL, NULL }
+        };
+
+        luaL_setfuncs(L, funcRegs, 0);
+        lua_pushvalue(L, -1);
+
+        lua_setfield(L, -1, "__index");
+        lua_setglobal(L, "CCamera");
+    }
+
     // Register input functions
     lua_register(L, "isLMBpressed", luaF::isLMBPressed);
     lua_register(L, "isRMBpressed", luaF::isRMBPressed);
     lua_register(L, "isKeyDown", luaF::isKeyDown);
    
     // Load scripts
-    luaF::load_script(L, "Vector.lua");
-    luaF::load_script(L, "WorldObject.lua");
+    //luaF::load_script(L, "Vector.lua");
+    //luaF::load_script(L, "WorldObject.lua");
+    //luaF::load_script(L, "Camera.lua");
     luaF::load_script(L, "main.lua");
 }
 
@@ -398,22 +620,20 @@ void Game::Run()
         m_sMgr->drawAll();
         m_guiEnv->drawAll();
         m_driver->endScene();
+
+        std::wstring title = std::wstring(L"Tower Defense. FPS: ") + std::to_wstring(1.0 / dt);
+        m_dev->setWindowCaption(title.c_str());
+
 	}
 }
 
 void Game::Init()
 {
-    // call lua init
+    // Init Lua
     lua_getglobal(L, "init");
     if (lua_isfunction(L, -1))
         luaF::pcall_p(L, 0, 0, 0);
 
-    // Init player camera
-    {
-        m_mainCam = m_sMgr->addCameraSceneNodeFPS();
-        m_mainCam->setPosition({ 20, 5, -5 });
-        m_mainCam->setID(ID_IsNotPickable);
-    }
 
     // Get time now
     then = m_dev->getTimer()->getTime();
@@ -421,15 +641,6 @@ void Game::Init()
 
 void Game::Update(float dt)
 {
-    constexpr float MOVEMENT_SPEED = 20.f;
-
-    // Push highlighted node name (raycasted hit node) to lua
-    if (highlightedSceneNode)
-        lua_pushstring(L, highlightedSceneNode->getName());
-    else
-        lua_pushstring(L, "");
-    lua_setglobal(L, "castTargetName");
-
     // Lua main update
     lua_getglobal(L, "update");
 	if (lua_isfunction(L, -1)) 
@@ -437,63 +648,4 @@ void Game::Update(float dt)
 		lua_pushnumber(L, dt);
         luaF::pcall_p(L, 1, 0, 0);
 	}
-
-    // VECTOR3 HAS AN INTERPOLATE FUNCTION!
-
-    ICameraSceneNode* pcam = m_sMgr->getActiveCamera();
-    core::vector3df nodePosition = pcam->getPosition();
-    vector3df fwd;
-    // Movement (Should be placed in Lua)
-    {
-        // get directions
-        matrix4 mat = pcam->getViewMatrix();        // the world dirs are in COLUMNS (remember transpose of WM)
-        fwd = vector3df(mat[2], mat[6], mat[10]).normalize();
-        vector3df right = vector3df(mat[0], mat[4], mat[8]).normalize();
-        vector3df up = pcam->getUpVector();
-        up.normalize();
-
-        if (m_evRec.IsKeyDown(irr::KEY_KEY_W))
-            nodePosition += fwd * MOVEMENT_SPEED * dt;
-        else if (m_evRec.IsKeyDown(irr::KEY_KEY_S))
-            nodePosition -= fwd * MOVEMENT_SPEED * dt;
-
-        if (m_evRec.IsKeyDown(irr::KEY_KEY_A))
-            nodePosition -= right * MOVEMENT_SPEED * dt;
-        else if (m_evRec.IsKeyDown(irr::KEY_KEY_D))
-            nodePosition += right * MOVEMENT_SPEED * dt;
-
-        if (m_evRec.IsKeyDown(irr::KEY_KEY_E))
-            nodePosition += up * MOVEMENT_SPEED * dt;
-        else if (m_evRec.IsKeyDown(irr::KEY_LSHIFT))
-            nodePosition -= up * MOVEMENT_SPEED * dt;
-    }
-
-    // Movement bounds (Should be placed in LUA)
-    {
-        // camera bounds
-        if (abs(pcam->getAbsolutePosition().X) > 70 ||
-            abs(pcam->getAbsolutePosition().Y) > 70 ||
-            abs(pcam->getAbsolutePosition().Z) > 70)
-        {
-            nodePosition = vector3df(0.0, 20.0, 0.0);
-        }
-    }
-
-    // Set player position
-    pcam->setPosition(nodePosition);
-    
-
-
-    // Highlight nodes that are pickable
-    {
-        if (highlightedSceneNode)
-            highlightedSceneNode->setDebugDataVisible(0);   // reset debug bb
-
-        ISceneNode* selectedSceneNode = CastRay(m_mainCam->getPosition(), fwd);
-        if (selectedSceneNode)
-        {
-            highlightedSceneNode = selectedSceneNode;
-            selectedSceneNode->setDebugDataVisible(irr::scene::EDS_BBOX);   // debug bb draw
-        }
-    }
 }

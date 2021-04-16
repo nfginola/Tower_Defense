@@ -13,7 +13,7 @@ enemies = {}
 
 occupied_cells = {} -- temp
 
-enemies_to_delete = {}  
+enemies_to_delete = {}
 
 -- Create FPS cam
 cam = Camera:new()
@@ -174,16 +174,17 @@ function update(dt)
             --     (math.abs(enemyPos.z - towerPos.z) < 30) 
             --     then
                 -- no need to fix this now (unless critical)
+                enemy.cRep:drawLine(tower.cRep)
                 local lenTE = (enemyPos - towerPos):length()
-                if (lenTE <= 30) then
-                    enemy.cRep:drawLine(tower.cRep)
-                end
+                -- if (lenTE <= 30) then
+                --     enemy.cRep:drawLine(tower.cRep)
+                -- end
             -- end
         end
 
         -- Check collisions Enemy vs Base
         if (enemy:collidesWith(base)) then
-            print("[LUA]: Lost HP!") -- Should call some "Base:takeDamage"
+            --print("[LUA]: Lost HP!") -- Should call some "Base:takeDamage"
             enemies_to_delete[k] = true
         end
     end

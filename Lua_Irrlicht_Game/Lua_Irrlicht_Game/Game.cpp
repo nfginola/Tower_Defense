@@ -104,7 +104,7 @@ namespace luaF
             wo->mesh->remove();
             wo->mesh = nullptr;
         }
-        std::cout << "[C++]: Node removed!\n";
+        //std::cout << "[C++]: Node removed!\n";
         return 0;
     }   
     int deallocateWO(lua_State* L)
@@ -120,7 +120,7 @@ namespace luaF
             }
             delete wo;
         }
-        std::cout << "[C++]: WO deallocated!\n";
+        //std::cout << "[C++]: WO deallocated!\n";
 
         return 0;
     }
@@ -336,7 +336,7 @@ namespace luaF
         luaL_getmetatable(L, "mt_Camera");
         lua_setmetatable(L, -2);
 
-        std::cout << "Camera allocated!\n";
+        //std::cout << "Camera allocated!\n";
 
         return 1;
     }
@@ -347,7 +347,7 @@ namespace luaF
 
         if (cam != nullptr)
             delete cam;
-        std::cout << "[C++]: Camera deallocated!\n";
+        //std::cout << "[C++]: Camera deallocated!\n";
 
         return 0;
     }
@@ -590,9 +590,6 @@ Game::Game() : then(0)
     lua_register(L, "isKeyDown", luaF::isKeyDown);
    
     // Load scripts
-    //luaF::load_script(L, "Vector.lua");
-    //luaF::load_script(L, "WorldObject.lua");
-    //luaF::load_script(L, "Camera.lua");
     luaF::load_script(L, "main.lua");
 }
 

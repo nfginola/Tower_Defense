@@ -16,6 +16,7 @@ occupied_cells = {} -- temp
 enemies_to_delete = {}
 
 -- Create FPS cam
+-- h
 cam = Camera:new()
 cam:createFPSCam()
 

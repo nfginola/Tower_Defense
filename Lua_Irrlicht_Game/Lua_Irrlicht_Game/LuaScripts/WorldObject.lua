@@ -2,19 +2,26 @@ Vector = require("LuaScripts/Vector")
 
 local WorldObject = {
     cRep = nil,     -- c representation of world obj
-    pos = nil
+    pos = nil,
+    id = nil
 }
 
-function WorldObject:new(id) 
+function WorldObject:new() 
     local wo = {}
 
     self.__index = self
     setmetatable(wo, self) 
 
-    wo.cRep = CWorldObject:new(id)
+    -- wo.cRep = CWorldObject:new(id)
     wo.pos = Vector:new({ x = 0, y = 0, z = 0})
 
     return wo
+end
+
+function WorldObject:initCRep(id)
+    print(id)
+    self.cRep = CWorldObject:new(id)
+    self.id = id
 end
 
 function WorldObject:getPosition()
@@ -40,6 +47,10 @@ end
 function WorldObject:__tostring()
     str = string.format("WorldObject Pos (%f, %f, %f)", self.pos.x, self.pos.y, self.pos.z)
     return str
+end
+
+function WorldObject:getID()
+    return self.id
 end
 
 

@@ -160,6 +160,7 @@ struct WorldObject
     vector3df pos;
     ISceneNode* mesh = nullptr;
 
+    bool meshVisible = true;
     bool bbVisible = false;
 
     bool dynamic = false;
@@ -184,6 +185,17 @@ struct Camera
 {
     ICameraSceneNode* sceneCam = nullptr;
 };
+
+//struct Vector3
+//{
+//    float x = 0.f;
+//    float y = 0.f;
+//    float z = 0.f;
+//
+//    float length() const;
+//    Vector3& normalize();
+//};
+
 
 class Game
 {

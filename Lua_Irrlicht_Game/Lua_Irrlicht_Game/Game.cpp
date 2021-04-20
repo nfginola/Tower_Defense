@@ -1,5 +1,76 @@
 #include "Game.h"
 
+//float operator*(const Vector3& lh, const Vector3& rh)
+//    {
+//        return lh.x * rh.x + lh.y * rh.y + lh.z * rh.z;
+//    }
+//
+//Vector3 operator*(const Vector3& vec, float factor)
+//{
+//    return Vector3{ 
+//        vec.x * factor, 
+//        vec.y * factor, 
+//        vec.z * factor 
+//    };
+//}
+//
+//Vector3 operator*(float factor, const Vector3& vec)
+//    {
+//        return vec * factor;
+//    }
+//
+//// dot product
+//float operator*(const Vector3& lh, const Vector3& rh)
+//{
+//    return lh.x * rh.x + lh.y * rh.y + lh.z * rh.z;
+//}
+//
+//Vector3 operator+(const Vector3& lh, const Vector3& rh)
+//    {
+//        return Vector3{
+//            lh.x + rh.x,
+//            lh.y + rh.y,
+//            lh.z + rh.z
+//        };
+//    }
+//
+//Vector3 operator-(const Vector3& vec)
+//    {
+//        return Vector3{
+//            -vec.x,
+//            -vec.y,
+//            -vec.z
+//        };
+//    }
+//
+//Vector3 operator-(const Vector3& lh, const Vector3& rh)
+//    {
+//        return Vector3{
+//            lh.x - rh.x,
+//            lh.y - rh.y,
+//            lh.z - rh.z
+//        };
+//    }
+//
+//float Vector3::length() const
+//    {
+//        return sqrt(x * x + y * y + z * z);
+//    }
+//
+//Vector3& Vector3::normalize()
+//    {
+//        float l = length();
+//        x /= l;
+//        y /= l;
+//        z /= l;
+//        return *this;
+//    }
+//
+//std::ostream& operator<<(std::ostream& os, const Vector3& vec)
+//    {
+//        os << "Vector: (" << vec.x << ", " << vec.y << ", " << vec.z << ")\n";
+//    }
+
 enum
 {
     ID_IsNotPickable = 0,
@@ -281,6 +352,23 @@ namespace luaF
         s_driver->draw3DLine(wo1->mesh->getAbsolutePosition(), wo2->mesh->getAbsolutePosition(), SColor(255, 255, 0, 0));
         return 0;
     }
+
+    int woToggleVisible(lua_State* L)
+    {
+        WorldObject* wo = checkObject<WorldObject>(L, 1, "mt_WorldObject");
+
+        if (wo->meshVisible)
+        {
+            wo->mesh->setVisible(false);
+            wo->meshVisible = false;
+        }
+        else
+        {
+            wo->mesh->setVisible(true);
+            wo->meshVisible = true;
+        }
+        return 0;
+    }
     
     // Input
     int isLMBPressed(lua_State* L)
@@ -460,7 +548,6 @@ namespace luaF
             if (highlightedSceneNode)
                 highlightedSceneNode->setDebugDataVisible(0);   // reset debug bb
 
-
             // get fwd
             const matrix4& mat = cam->sceneCam->getViewMatrix();
             vector3df forwardVec = vector3df(mat[2], mat[6], mat[10]).normalize();
@@ -473,6 +560,7 @@ namespace luaF
                 hitName = highlightedSceneNode->getName();
                 selectedSceneNode->setDebugDataVisible(irr::scene::EDS_BBOX);   // debug bb draw
             }
+            
 
             lua_pushstring(L, hitName.c_str());
         }
@@ -540,6 +628,7 @@ Game::Game() : then(0)
         { "getPosition", luaF::woGetPosition },
 
         { "toggleBB", luaF::woToggleBB  },
+        { "toggleVisible", luaF::woToggleVisible  },
         { "collidesWith", luaF::woCollides  },
         { "drawLine", luaF::woDrawLine  },
 
@@ -601,6 +690,7 @@ Game::~Game()
 void Game::Run()
 {
 	Init();
+
 
 	while (m_dev->run())
 	{

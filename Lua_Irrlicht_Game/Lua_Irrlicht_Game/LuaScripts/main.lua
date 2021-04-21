@@ -17,7 +17,7 @@ cam:createFPSCam()
 
 --[[
 
-WAY TO SOLVE THE AMOUNT OF TOWER VS ENEMY CHECKING!
+WAY TO SOLVE THE AMOUNT OF TOWER VS ENEMY CHECKING?
 
 NO NEED!!
 Christopher: Du behöver inte hantera den optimeringen

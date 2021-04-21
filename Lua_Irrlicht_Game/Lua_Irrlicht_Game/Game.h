@@ -20,7 +20,17 @@ public:
     virtual bool OnEvent(const SEvent& event)
     {
         if (event.EventType == irr::EET_KEY_INPUT_EVENT)
+        {
+            // held down
             m_keyIsDown[event.KeyInput.Key] = event.KeyInput.PressedDown;
+
+            // pressed and released
+            if (event.KeyInput.PressedDown == false)
+            {
+                m_keyWasPressed[event.KeyInput.Key] = true;
+            }
+        }
+           
 
         if (event.EventType == irr::EET_MOUSE_INPUT_EVENT)
         {
@@ -47,6 +57,8 @@ public:
                 break;
             }
         }
+
+
 
         return false;
     }
@@ -103,6 +115,51 @@ public:
 
     }
 
+    bool isKeyPressed(const std::string& key)
+    {
+        if (key == "W") return keyPressedHelper(KEY_KEY_W);
+        else if (key == "A") return keyPressedHelper(KEY_KEY_A);
+        else if (key == "S") return keyPressedHelper(KEY_KEY_S);
+        else if (key == "D") return keyPressedHelper(KEY_KEY_D);
+        else if (key == "K") return keyPressedHelper(KEY_KEY_K);
+        else if (key == "Q") return keyPressedHelper(KEY_KEY_Q);
+        else if (key == "E") return keyPressedHelper(KEY_KEY_E);
+        else if (key == "R") return keyPressedHelper(KEY_KEY_R);
+        else if (key == "T") return keyPressedHelper(KEY_KEY_T);
+        else if (key == "Y") return keyPressedHelper(KEY_KEY_Y);
+        else if (key == "U") return keyPressedHelper(KEY_KEY_U);
+        else if (key == "I") return keyPressedHelper(KEY_KEY_I);
+        else if (key == "O") return keyPressedHelper(KEY_KEY_O);
+        else if (key == "P") return keyPressedHelper(KEY_KEY_P);
+        else if (key == "F") return keyPressedHelper(KEY_KEY_F);
+        else if (key == "G") return keyPressedHelper(KEY_KEY_G);
+        else if (key == "H") return keyPressedHelper(KEY_KEY_H);
+        else if (key == "J") return keyPressedHelper(KEY_KEY_J);
+        else if (key == "K") return keyPressedHelper(KEY_KEY_K);
+        else if (key == "L") return keyPressedHelper(KEY_KEY_L);
+        else if (key == "Z") return keyPressedHelper(KEY_KEY_Z);
+        else if (key == "X") return keyPressedHelper(KEY_KEY_X);
+        else if (key == "C") return keyPressedHelper(KEY_KEY_C);
+        else if (key == "V") return keyPressedHelper(KEY_KEY_V);
+        else if (key == "B") return keyPressedHelper(KEY_KEY_B);
+        else if (key == "N") return keyPressedHelper(KEY_KEY_N);
+        else if (key == "M") return keyPressedHelper(KEY_KEY_M);
+
+        else if (key == "1") return keyPressedHelper(KEY_KEY_0);
+        else if (key == "2") return keyPressedHelper(KEY_KEY_1);
+        else if (key == "3") return keyPressedHelper(KEY_KEY_2);
+        else if (key == "4") return keyPressedHelper(KEY_KEY_3);
+        else if (key == "5") return keyPressedHelper(KEY_KEY_4);
+
+        else if (key == "6") return keyPressedHelper(KEY_KEY_5);
+        else if (key == "7") return keyPressedHelper(KEY_KEY_6);
+        else if (key == "8") return keyPressedHelper(KEY_KEY_7);
+        else if (key == "9") return keyPressedHelper(KEY_KEY_8);
+        else if (key == "0") return keyPressedHelper(KEY_KEY_9);
+
+        else if (key == "LShift") return keyPressedHelper(KEY_LSHIFT);
+    }
+
     bool isLMBPressed()
     {
         bool toRet = m_lmbPressed;
@@ -135,12 +192,22 @@ public:
 
 private:
     bool m_keyIsDown[KEY_KEY_CODES_COUNT];
+    bool m_keyWasPressed[KEY_KEY_CODES_COUNT];
 
     bool m_lmbPressed = false;
     bool m_lmbDown = false;
 
     bool m_rmbPressed = false;
     bool m_rmbDown = false;
+
+    bool keyPressedHelper(EKEY_CODE code)
+    {
+        bool toRet = m_keyWasPressed[code];
+        m_keyWasPressed[code] = false;
+        return toRet;
+    }
+
+
 };
 
 struct LinInterpMover

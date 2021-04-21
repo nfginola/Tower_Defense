@@ -395,6 +395,14 @@ namespace luaF
         return 1;
     }
 
+    int isKeyPressed(lua_State* L)
+    {
+        std::string key = lua_tostring(L, -1);
+        bool keyPressed = s_evRec->isKeyPressed(key);
+        lua_pushboolean(L, keyPressed);
+        return 1;
+    }
+
     // Utility (Non Lua Func)
     ISceneNode* irrlichtCastRay(const vector3df& start, vector3df dir)
     {
@@ -677,6 +685,7 @@ Game::Game() : then(0)
     lua_register(L, "isLMBpressed", luaF::isLMBPressed);
     lua_register(L, "isRMBpressed", luaF::isRMBPressed);
     lua_register(L, "isKeyDown", luaF::isKeyDown);
+    lua_register(L, "isKeyPressed", luaF::isKeyPressed);
    
     // Load scripts
     luaF::load_script(L, "main.lua");

@@ -12,14 +12,12 @@ function WorldObject:new()
     self.__index = self
     setmetatable(wo, self) 
 
-    -- wo.cRep = CWorldObject:new(id)
     wo.pos = Vector:new({ x = 0, y = 0, z = 0})
 
     return wo
 end
 
 function WorldObject:initCRep(id)
-    print(id)
     self.cRep = CWorldObject:new(id)
     self.id = id
 end
@@ -53,5 +51,8 @@ function WorldObject:getID()
     return self.id
 end
 
+function lengthBetween(o1, o2)
+    return (o1:getPosition() - o2:getPosition()):length()
+end
 
 return WorldObject

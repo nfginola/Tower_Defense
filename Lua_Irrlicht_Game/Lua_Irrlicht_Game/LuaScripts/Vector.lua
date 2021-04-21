@@ -4,13 +4,11 @@ local Vector = {
     z = 0
 }
 
--- Exercise 5
 function Vector:__tostring()
     str = string.format("Vector: (%f, %f, %f)", self.x, self.y, self.z)
     return str
 end
 
--- Exercise 6
 function Vector:__add(vec) 
 
     if (getmetatable(self) ~= Vector or 
@@ -59,17 +57,18 @@ function Vector:__mul(v)
 end
 
 function Vector:new(values) 
-    local vec = {}
+    local vec = values or {}
+    --local vec = {}
 
     self.__index = self
     
     setmetatable(vec, self)  
 
-    if (values ~= nil and type(values) == "table") then
-        vec.x = values.x
-        vec.y = values.y
-        vec.z = values.z
-    end
+    -- if (values ~= nil and type(values) == "table") then
+    --     vec.x = values.x
+    --     vec.y = values.y
+    --     vec.z = values.z
+    -- end
 
     return vec
 end

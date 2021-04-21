@@ -1,12 +1,12 @@
 WorldObject = require("LuaScripts/WorldObject")
 Tower = require("LuaScripts/Tower")
+Base = require("LuaScripts/Base")
 
 local Cell = WorldObject:new()
 
 function Cell:new(id, x, z) 
     local c = 
     {
-        -- subtype specific variables
         id = nil,
         occupied = false,
         inhabitant = nil,                -- Base or Tower
@@ -46,7 +46,7 @@ end
 function Cell:placeTower()
     if (self.type ~= "Valid") then error("Cell not valid! Cannot place tower!") end
 
-    self.inhabitant = Tower:new(self.id, self:getPosition(), { damage = 10, shotsPerSec = 2, range = 20})
+    self.inhabitant = Tower:new(self.id, self:getPosition(), { damage = 10, shotsPerSec = 3, range = 25})
     self.status = "Occupied"
     
     return self.inhabitant
@@ -54,26 +54,22 @@ end
 
 function Cell:removeTower()
     self.inhabitant.cRep:toggleVisible()
-    self.inhabitant.rangeMesh.cRep:toggleVisible() 
+
+    if (towerRangeHidden == false) then
+        self.inhabitant.rangeMesh.cRep:toggleVisible() 
+    end
+    
     self.inhabitant = nil
     self.status = "Not Occupied"
 end
 
 function Cell:placeBase()
     if (self.type ~= "Base") then error("Cell not 'Base'! Cannot place Base!") end
-
-    -- Replace with Base class
-    self.inhabitant = WorldObject:new()
-    self.inhabitant:initCRep("77777")
-    self.inhabitant.cRep:addCubeMesh()
-    self.inhabitant.cRep:setTexture("resources/textures/modernbrick.jpg")
-
-    local cellPos = self:getPosition()
-    self.inhabitant.cRep:setPosition(cellPos.x, cellPos.y + 10, cellPos.z)
-    self.inhabitant.cRep:setScale(0.7, 1.3, 0.9)
-    self.inhabitant.cRep:toggleBB()
+    if (self.status == "Occupied") then error("Something has gone terribily wrong..") end
 
     self.status = "Occupied"
+    self.inhabitant = Base:new(self.id, self:getPosition(), 100)
+
     return self.inhabitant
 end
 

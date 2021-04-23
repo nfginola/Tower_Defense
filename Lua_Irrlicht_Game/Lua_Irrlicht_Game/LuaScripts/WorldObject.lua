@@ -3,22 +3,32 @@ Vector = require("LuaScripts/Vector")
 local WorldObject = {
     cRep = nil,     -- c representation of world obj
     pos = nil,
-    id = nil
+    id = nil,
+    scale = nil
 }
 
 function WorldObject:new() 
     local wo = {}
 
+    -- VARFÖR FUNKAR INTE DET ATT INITALISERA HÄR??
+    -- Det verkar vara SHARED variabel (kolla med size-reduction på Enemies!)
+
+    -- self.pos = Vector:new({ x = 0, y = 0, z = 0})
+    -- self.scale = Vector:new({ x = 1, y = 1, z = 1})
+
     self.__index = self
     setmetatable(wo, self) 
 
-    wo.pos = Vector:new({ x = 0, y = 0, z = 0})
 
     return wo
 end
 
 function WorldObject:initCRep(id)
     self.cRep = CWorldObject:new(id)
+
+    self.pos = Vector:new({ x = 0, y = 0, z = 0})
+    self.scale = Vector:new({ x = 1, y = 1, z = 1})
+    
     self.id = id
 end
 
@@ -35,6 +45,29 @@ function WorldObject:setPosition(x, y, z)
     self.pos.y = y
     self.pos.z = z
     self.cRep:setPosition(x, y, z)
+end
+
+function WorldObject:setScale(x, y, z)
+
+    -- if (self.scale == nil) then
+    --     print("huH!")
+    -- end
+
+    --print(self.scale)
+
+
+    self.scale.x = x
+    self.scale.y = y
+    self.scale.z = z
+    self.cRep:setScale(x, y, z)
+end
+
+function WorldObject:getScale()
+    return self.scale
+end
+
+function WorldObject:update(dt)
+    self.cRep:update(dt)
 end
 
 function WorldObject:collidesWith(rh)
@@ -54,5 +87,7 @@ end
 function lengthBetween(o1, o2)
     return (o1:getPosition() - o2:getPosition()):length()
 end
+
+
 
 return WorldObject

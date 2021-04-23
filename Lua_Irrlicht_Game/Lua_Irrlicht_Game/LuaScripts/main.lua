@@ -31,6 +31,17 @@ function init()
     xLen = io.read("*n")
     zLen = io.read("*n")
 
+    -- Init skybox
+    -- top, bottom, left, right, front, back
+    setSkyboxTextures(
+        "resources/textures/skybox/py.png",
+        "resources/textures/skybox/ny.png",
+        "resources/textures/skybox/nx.png",
+        "resources/textures/skybox/px.png",
+        "resources/textures/skybox/pz.png",
+        "resources/textures/skybox/nz.png"
+    )
+    
     -- Init cells
     for i = 1, xLen do
         cells[i] = {}
@@ -68,9 +79,8 @@ function update(dt)
     if (isKeyDown("K")) then
         if (isLMBpressed()) then
             local newEnemy = Enemy:new(
-                id, 
-                { x = -10, y = 10, z = 0}, 
-                { maxHealth = 30, damage = 10, unitsPerSec = 10}
+                "cg1,1", 
+                { maxHealth = 40, damage = 10, unitsPerSec = 40}
             )
             enemies[newEnemy.id] = newEnemy
         end
@@ -79,7 +89,8 @@ function update(dt)
     -- Go over all enemies and towers and set states
     for k, enemy in pairs(enemies) do
         local enemyPos = enemy:getPosition()
-        enemy:setPosition(enemyPos.x + 20 * dt, enemyPos.y, enemyPos.z);
+        --enemy:setPosition(enemyPos.x + 20 * dt, enemyPos.y, enemyPos.z);
+        enemy:update(dt)
 
         -- Check collisions Enemy vs Base
         local baseCollided = enemy:collidesWith(base)

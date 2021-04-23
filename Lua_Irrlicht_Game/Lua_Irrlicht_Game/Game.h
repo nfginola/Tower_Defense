@@ -212,12 +212,16 @@ private:
 
 struct LinInterpMover
 {
-	vector3df start, end;
-	float elapsed_time = 0.f;
-	float max_time = 0.f;
+	vector3df startPos, endPos;
+	float elapsedTime = 0.f;
+	float maxTime = 0.f;
+    float currTime = 0.f;
 
-	bool moveThisFrame(float dt);
-	void assignNextMove(vector3df start, vector3df end, float max_time);
+    bool done = true;
+    bool dead = false;
+
+	vector3df Update(float dt, const std::string& id);
+	void AssignNextMove(const vector3df& start, const vector3df& end, float max_time);
 
 };
 
@@ -236,15 +240,6 @@ struct WorldObject
     void Test()
     {
         std::cout << "Hello!\n";
-    }
-
-    void Update(float dt)
-    {
-        if (mover.moveThisFrame(dt))
-        {
-            // If move done
-            // call lua assignNextCoroutine which in turn calls assignNextMove
-        }
     }
 };
 
@@ -275,8 +270,6 @@ public:
 private:
 	void Init();
 	void Update(float dt);
-
-    ISceneNode* CastRay(const vector3df& start, vector3df dir);
   
 private:
 	lua_State* L = nullptr;

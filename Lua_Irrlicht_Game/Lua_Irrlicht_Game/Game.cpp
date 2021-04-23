@@ -80,6 +80,12 @@ enum
 
 namespace luaF
 {
+    static ISceneManager* s_sMgr = nullptr;
+    static EventReceiver* s_evRec = nullptr;
+    static IVideoDriver* s_driver = nullptr;
+    static ISceneCollisionManager* s_collMan = nullptr;
+
+    static lua_State* s_L = nullptr;
     // old
     /* WorldObject* checkWO(lua_State* L, int n)
      {
@@ -90,10 +96,7 @@ namespace luaF
          return wo;
      }*/
 
-    static ISceneManager* s_sMgr = nullptr;
-    static EventReceiver* s_evRec = nullptr;
-    static IVideoDriver* s_driver = nullptr;
-    static ISceneCollisionManager* s_collMan = nullptr;
+
 
     bool check_lua(lua_State* L, int r)
     {
@@ -289,6 +292,14 @@ namespace luaF
         return 0;
     }
 
+    int woSetDynamic(lua_State* L)
+    {
+        WorldObject* wo = checkObject<WorldObject>(L, 1, "mt_WorldObject");
+
+        wo->dynamic = true;
+        return 0;
+    }
+
     int woSetTransparent(lua_State* L)
     {
         WorldObject* wo = checkObject<WorldObject>(L, 1, "mt_WorldObject");
@@ -369,6 +380,47 @@ namespace luaF
         }
         return 0;
     }
+
+    int woSetMoveNextPoint(lua_State* L)
+    {
+        WorldObject* wo = checkObject<WorldObject>(L, 1, "mt_WorldObject");
+
+        if (!(wo->dynamic))
+            throw std::runtime_error("Object is not set to be dynamic!");
+
+        vector3df start;
+        start.X = lua_tonumber(L, -7);
+        start.Y = lua_tonumber(L, -6);
+        start.Z = lua_tonumber(L, -5);
+
+        vector3df end;
+        end.X = lua_tonumber(L, -4);
+        end.Y = lua_tonumber(L, -3);
+        end.Z = lua_tonumber(L, -2);
+
+        float interpTime = lua_tonumber(L, -1);
+
+        //std::cout << "Start: (" << start.X << ", " << start.Y << ", " << start.Z << ")\n";
+        //std::cout << "End: (" << end.X << ", " << end.Y << ", " << end.Z << ")\n";
+        //std::cout << "Interp time: " << interpTime << '\n';
+        //std::cout << "Next move assigned to: " << wo->mesh->getName() << '\n';
+
+        wo->mover.AssignNextMove(start, end, interpTime);
+        return 0;
+    }
+
+    int woUpdate(lua_State* L)
+    {
+        WorldObject* wo = checkObject<WorldObject>(L, 1, "mt_WorldObject");
+        float dt = lua_tonumber(L, -1);
+            
+        if (!(wo->mover.dead) && wo->dynamic)
+        {
+            wo->pos = wo->mover.Update(dt, wo->mesh->getName());
+            wo->mesh->setPosition(wo->pos);
+        }
+        return 0;
+    }
     
     // Input
     int isLMBPressed(lua_State* L)
@@ -401,6 +453,30 @@ namespace luaF
         bool keyPressed = s_evRec->isKeyPressed(key);
         lua_pushboolean(L, keyPressed);
         return 1;
+    }
+
+    // Skybox
+    int setSkyboxTextures(lua_State* L)
+    {
+        io::path topPath = lua_tostring(L, -6);
+        io::path bottomPath = lua_tostring(L, -5);
+        io::path leftPath = lua_tostring(L, -4);
+        io::path rightPath = lua_tostring(L, -3);
+        io::path frontPath = lua_tostring(L, -2);
+        io::path backPath = lua_tostring(L, -1);
+
+        std::cout << topPath.c_str() << '\n';
+
+        auto top = s_driver->getTexture(topPath);
+        auto bottom = s_driver->getTexture(bottomPath);
+        auto left = s_driver->getTexture(leftPath);
+        auto right = s_driver->getTexture(rightPath);
+        auto front = s_driver->getTexture(frontPath);
+        auto back = s_driver->getTexture(backPath);
+
+        s_sMgr->addSkyBoxSceneNode(top, bottom, left, right, front, back);
+
+        return 0;
     }
 
     // Utility (Non Lua Func)
@@ -577,6 +653,58 @@ namespace luaF
     }
 }
 
+vector3df LinInterpMover::Update(float dt, const std::string& id)
+{
+    currTime += dt;
+
+    vector3df newPos;
+
+    // StartPos is starting point and (endPos - startPos) is the direction of movement where the rate of change of the magnitude is proportional to
+    // currTime/maxTime
+    if (currTime >= maxTime)
+    {
+        newPos = endPos;
+        done = true;
+
+        currTime = 0.0;
+
+        // Return to Lua to ask for next move
+        lua_getglobal(luaF::s_L, "getNextWaypoint");
+        if (lua_isfunction(luaF::s_L, -1))
+        {
+            lua_pushstring(luaF::s_L, id.c_str());
+            luaF::pcall_p(luaF::s_L, 1, 1, 0);
+
+            bool succeeded = lua_toboolean(luaF::s_L, -1);
+            
+            // If coroutine died, don't update anymore
+            if (!succeeded)
+            {
+                currTime = 0.f;
+                maxTime = 0.f;
+                dead = true;
+            }
+        }
+    }
+    else
+        newPos = startPos + (endPos - startPos) * (currTime / maxTime);
+
+
+    return newPos;
+}
+
+void LinInterpMover::AssignNextMove(const vector3df& start, const vector3df& end, float time)
+{
+    if (done)
+    {
+        startPos = start;
+        endPos = end;
+        maxTime = time;
+        done = false;
+    }
+}
+
+
 Game::Game() : then(0)
 {
     // Init Irrlicht
@@ -609,6 +737,7 @@ Game::Game() : then(0)
     
     // Init lua state
     L = luaL_newstate();
+    luaF::s_L = L;
     luaL_openlibs(L);   // Open commonly used libs
 
     // Register World Object representation
@@ -632,6 +761,8 @@ Game::Game() : then(0)
         { "setTexture", luaF::woSetTexture },
         { "setPickable", luaF::woSetPickable },
         { "setTransparent", luaF::woSetTransparent  },
+        { "setDynamic", luaF::woSetDynamic  },
+        { "setMoveNextPoint", luaF::woSetMoveNextPoint  },
 
         { "getPosition", luaF::woGetPosition },
 
@@ -639,6 +770,9 @@ Game::Game() : then(0)
         { "toggleVisible", luaF::woToggleVisible  },
         { "collidesWith", luaF::woCollides  },
         { "drawLine", luaF::woDrawLine  },
+
+        { "update", luaF::woUpdate  },
+
 
         
 
@@ -686,6 +820,7 @@ Game::Game() : then(0)
     lua_register(L, "isRMBpressed", luaF::isRMBPressed);
     lua_register(L, "isKeyDown", luaF::isKeyDown);
     lua_register(L, "isKeyPressed", luaF::isKeyPressed);
+    lua_register(L, "setSkyboxTextures", luaF::setSkyboxTextures);
    
     // Load scripts
     luaF::load_script(L, "main.lua");
@@ -729,7 +864,6 @@ void Game::Init()
     lua_getglobal(L, "init");
     if (lua_isfunction(L, -1))
         luaF::pcall_p(L, 0, 0, 0);
-
 
     // Get time now
     then = m_dev->getTimer()->getTime();

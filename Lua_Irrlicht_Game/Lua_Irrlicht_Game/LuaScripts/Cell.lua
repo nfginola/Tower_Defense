@@ -23,7 +23,7 @@ function Cell:new(id, x, z)
     c:initCRep(id)
     c.cRep:addCubeMesh()
     c:setPosition((x - 1) * 10.5, 0.0, (z - 1) * 10.5)
-    c.cRep:setTexture("resources/textures/moderntile.jpg")
+    c.cRep:setTexture("resources/textures/sand.jpg")
     c.cRep:addCasting()
     c.cRep:setPickable()
 
@@ -46,7 +46,7 @@ end
 function Cell:placeTower()
     if (self.type ~= "Valid") then error("Cell not valid! Cannot place tower!") end
 
-    self.inhabitant = Tower:new(self.id, self:getPosition(), { damage = 10, shotsPerSec = 3, range = 25})
+    self.inhabitant = Tower:new(self.id, { damage = 10, shotsPerSec = 3, range = 25})
     self.status = "Occupied"
     
     return self.inhabitant

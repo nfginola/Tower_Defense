@@ -24,13 +24,14 @@ function Base:new(cellID, cellPosition, maxHealth)
     return b
 end
 
-function Base:getHealth()
-    return self.health
+function Base:isDead()
+    return self.health <= 0
 end
 
 function Base:takeDamage(damage)
     if (type(damage) ~= "number") then error("takeDamage can only take number argument!") end
     self.health = self.health - damage
+    print("Base HP left: " .. self.health)
 end
 
 return Base

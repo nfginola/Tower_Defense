@@ -246,6 +246,7 @@ struct WorldObject
 struct Camera
 {
     ICameraSceneNode* sceneCam = nullptr;
+    bool active = true;
 };
 
 //struct Vector3

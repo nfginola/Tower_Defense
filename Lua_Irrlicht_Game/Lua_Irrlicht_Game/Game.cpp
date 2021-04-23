@@ -651,6 +651,27 @@ namespace luaF
         return 1;
        
     }
+
+    int camToggleActive(lua_State* L)
+    {
+        Camera* cam = checkObject<Camera>(L, 1, "mt_Camera");
+
+        if (cam != nullptr)
+        {
+            if (cam->active)
+            {
+                cam->active = false;
+                cam->sceneCam->setInputReceiverEnabled(cam->active);
+            }
+            else
+            {
+                cam->active = true;
+                cam->sceneCam->setInputReceiverEnabled(cam->active);
+            }
+
+        }
+        return 1;
+    }
 }
 
 vector3df LinInterpMover::Update(float dt, const std::string& id)
@@ -804,6 +825,7 @@ Game::Game() : then(0)
         { "getPosition", luaF::camGetPosition },
 
         { "castRayForward", luaF::camCastRay },
+        { "toggleActive", luaF::camToggleActive },
 
         { NULL, NULL }
         };

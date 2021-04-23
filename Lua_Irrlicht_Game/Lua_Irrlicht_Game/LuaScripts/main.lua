@@ -64,6 +64,10 @@ function update(dt)
     -- Move camera with default FPS cam settings
     cam:move(dt)
 
+    if (isKeyPressed("G")) then
+        cam.cRep:toggleActive()
+    end
+
     -- Cast ray and get target cell name
     castTargetName = cam:castRayForward()
 
@@ -99,8 +103,7 @@ function update(dt)
             enemy:die()
             base:takeDamage(10)
 
-            print("HP: " .. base:getHealth())
-            if (base:getHealth() <= 0) then
+            if (base:isDead()) then
                 print("Base died!")
             end
         end

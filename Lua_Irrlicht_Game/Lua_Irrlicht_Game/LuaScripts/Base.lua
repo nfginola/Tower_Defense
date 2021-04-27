@@ -3,11 +3,15 @@ WorldObject = require("LuaScripts/WorldObject")
 local Base = WorldObject:new()
 
 function Base:new(cellID, cellPosition, maxHealth)
-    local b = 
-    {
-        id = nil,
-        health = maxHealth
-    }
+    -- local b = 
+    -- {
+    --     id = nil,
+    --     health = maxHealth
+    -- }
+
+    local b = WorldObject:new()
+    b.id = nil
+    b.health = maxHealth
 
     self.__index = self
     setmetatable(b, self) 
@@ -32,6 +36,10 @@ function Base:takeDamage(damage)
     if (type(damage) ~= "number") then error("takeDamage can only take number argument!") end
     self.health = self.health - damage
     print("Base HP left: " .. self.health)
+end
+
+function Base:getCellID()
+    return string.sub(self.id, 1, 5)
 end
 
 return Base

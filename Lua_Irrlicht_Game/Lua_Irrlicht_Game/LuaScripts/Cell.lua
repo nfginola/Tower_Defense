@@ -2,17 +2,25 @@ WorldObject = require("LuaScripts/WorldObject")
 Tower = require("LuaScripts/Tower")
 Base = require("LuaScripts/Base")
 
+-- Simply inherit all operations
 local Cell = WorldObject:new()
 
 function Cell:new(id, x, z) 
-    local c = 
-    {
-        id = nil,
-        occupied = false,
-        inhabitant = nil,                -- Base or Tower
-        type = "Invalid",                -- "Invalid" (Non-placeable), "Base" (Non-placeable), "Valid" (Tower placeable)
-        status = "Not Occupied"          -- "Occupied", "Not Occupied"
-    }
+    -- local c = 
+    -- {
+    --     id = nil,
+    --     occupied = false,
+    --     inhabitant = nil,                -- Base or Tower
+    --     type = "Invalid",                -- "Invalid" (Non-placeable), "Base" (Non-placeable), "Valid" (Tower placeable)
+    --     status = "Not Occupied"          -- "Occupied", "Not Occupied"
+    -- }
+
+    local c = WorldObject:new()
+    c.id = nil
+    c.occupied = false
+    c.inhabitant = nil
+    c.type = "Invalid"
+    c.status = "Not Occupied"
 
     self.__index = self
     setmetatable(c, self) 
@@ -27,7 +35,7 @@ function Cell:new(id, x, z)
     c.cRep:addCasting()
     c.cRep:setPickable()
 
-    print(id)
+    -- print(id)
 
     return c
 end
@@ -69,8 +77,14 @@ function Cell:placeBase()
 
     self.status = "Occupied"
     self.inhabitant = Base:new(self.id, self:getPosition(), 100)
+    base = self.inhabitant
+end
 
-    return self.inhabitant
+function Cell:removeBase()
+    self.status = "Not Occupied"
+    self.type = "Valid"
+    self.inhabitant = nil
+    base = nil
 end
 
 function Cell:getType()

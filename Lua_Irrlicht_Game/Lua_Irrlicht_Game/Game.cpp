@@ -387,7 +387,7 @@ namespace luaF
 
         if (!(wo->dynamic))
             throw std::runtime_error("Object is not set to be dynamic!");
-
+        
         vector3df start;
         start.X = lua_tonumber(L, -7);
         start.Y = lua_tonumber(L, -6);
@@ -406,6 +406,7 @@ namespace luaF
         //std::cout << "Next move assigned to: " << wo->mesh->getName() << '\n';
 
         wo->mover.AssignNextMove(start, end, interpTime);
+        // std::cout << "Assigned\n";
         return 0;
     }
 
@@ -596,7 +597,7 @@ namespace luaF
             lua_pushnumber(L, upVec.Z);
         }
         return 3;
-    }
+    }           
 
     int camGetForwardVec(lua_State* L)
     {
@@ -672,6 +673,22 @@ namespace luaF
         }
         return 1;
     }
+
+    int drawLine(lua_State* L)
+    {
+        float startX = lua_tonumber(L, -6);
+        float startY = lua_tonumber(L, -5);
+        float startZ = lua_tonumber(L, -4);
+
+        float endX = lua_tonumber(L, -3);
+        float endY = lua_tonumber(L, -2);
+        float endZ = lua_tonumber(L, -1);
+
+        s_driver->setTransform(video::ETS_WORLD, core::IdentityMatrix);
+        s_driver->draw3DLine(vector3df(startX, startY, startZ), vector3df(endX, endY, endZ), SColor(255, 255, 0, 255));
+
+        return 0;
+    }
 }
 
 vector3df LinInterpMover::Update(float dt, const std::string& id)
@@ -680,7 +697,7 @@ vector3df LinInterpMover::Update(float dt, const std::string& id)
 
     vector3df newPos;
 
-    // StartPos is starting point and (endPos - startPos) is the direction of movement where the rate of change of the magnitude is proportional to
+    // StartPos is starting point and (endPos - startPos) is the direction of movement where the rate of change of the magnitude is linearly proportional to
     // currTime/maxTime
     if (currTime >= maxTime)
     {
@@ -701,14 +718,22 @@ vector3df LinInterpMover::Update(float dt, const std::string& id)
             // If coroutine died, don't update anymore
             if (!succeeded)
             {
+                std::cout << "Dead\n";
                 currTime = 0.f;
-                maxTime = 0.f;
+                maxTime = -1.f;
                 dead = true;
             }
         }
     }
-    else
+    // Below checks are used to stop the interpolation on the final waypoint
+    else if (!done)
+    {
         newPos = startPos + (endPos - startPos) * (currTime / maxTime);
+    }
+    else if (done)
+    {
+        newPos = endPos;
+    }
 
 
     return newPos;
@@ -716,6 +741,7 @@ vector3df LinInterpMover::Update(float dt, const std::string& id)
 
 void LinInterpMover::AssignNextMove(const vector3df& start, const vector3df& end, float time)
 {
+    // Double-check move is indeed done before new interp assignment
     if (done)
     {
         startPos = start;
@@ -843,6 +869,7 @@ Game::Game() : then(0)
     lua_register(L, "isKeyDown", luaF::isKeyDown);
     lua_register(L, "isKeyPressed", luaF::isKeyPressed);
     lua_register(L, "setSkyboxTextures", luaF::setSkyboxTextures);
+    lua_register(L, "posDrawLine", luaF::drawLine);
    
     // Load scripts
     luaF::load_script(L, "main.lua");

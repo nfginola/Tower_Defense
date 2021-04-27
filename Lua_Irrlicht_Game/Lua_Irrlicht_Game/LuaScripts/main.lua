@@ -3,11 +3,16 @@ WorldObject = require("LuaScripts/WorldObject")
 Camera = require("LuaScripts/Camera")
 Cell = require("LuaScripts/Cell")
 Enemy = require("LuaScripts/Enemy")
+EnemyOrchestrator = require("LuaScripts/EnemyOrchestrator")
 
 base = nil
 towers = {}
 cells = {}
 enemies = {}
+orchestrator = EnemyOrchestrator:new()
+
+-- Ray cast target
+castTargetName = nil
 
 enemies_to_delete = {}
 
@@ -57,10 +62,62 @@ function init()
     baseCellID = string.format("cg%i,%i", xLen, 1)
     -- Place base
     cells[baseCellID]:setCellType("Base")
-    base = cells[baseCellID]:placeBase()
+    cells[baseCellID]:placeBase()
+
+
+    -- -- Initialize waypoints
+    -- orchestrator:setSpawn("cg4,5")
+    -- waypoints = { "cg1,5", "cg1,1", "cg3,1", "cg3,4", "cg5,4", "cg5,1", "cg8,1" }
+    -- -- waypoints = { "cg1,1", "cg5,1" }
+    -- for i = 1, #waypoints do
+    --     orchestrator:addWaypoint(waypoints[i])
+    -- end
+
+end
+
+-- BaseTool
+-- WaypointTool
+-- TowerTool
+-- EnemyTool
+current_tool = ""
+
+function edit_mode(dt)
+    if (isKeyPressed("1")) then
+        current_tool = "BaseTool"
+        print("Current tool is: " .. current_tool)
+    elseif (isKeyPressed("2")) then
+        current_tool = "WaypointTool"
+        print("Current tool is: " .. current_tool)
+    end
+    
+    -- Enemy Spawn + Waypoint
+    if (current_tool == "WaypointTool") then
+        if (isKeyPressed("R")) then
+            orchestrator:resetWaypoints()
+        elseif (isLMBpressed()) then
+            orchestrator:addWaypoint(castTargetName)
+        elseif (isKeyPressed("O")) then
+            orchestrator:confirmWaypoints()
+        end
+    end
+
+
 end
 
 function update(dt)
+
+    edit_mode(dt)
+
+    if (isKeyPressed("3")) then
+        current_tool = "TowerTool"
+        print("Current tool is: " .. current_tool)
+    elseif (isKeyPressed("4")) then
+        current_tool = "EnemySpawnTool"
+        print("Current tool is: " .. current_tool)
+    end
+
+    orchestrator:update(dt)
+
     -- Move camera with default FPS cam settings
     cam:move(dt)
 
@@ -80,27 +137,20 @@ function update(dt)
     end
 
     -- Create enemy
-    if (isKeyDown("K")) then
-        if (isLMBpressed()) then
-            local newEnemy = Enemy:new(
-                "cg1,1", 
-                { maxHealth = 40, damage = 10, unitsPerSec = 40}
-            )
-            enemies[newEnemy.id] = newEnemy
-        end
+    if (current_tool == "EnemySpawnTool") and (isLMBpressed()) then
+        orchestrator:spawnEnemy()
     end
 
     -- Go over all enemies and towers and set states
     for k, enemy in pairs(enemies) do
         local enemyPos = enemy:getPosition()
-        --enemy:setPosition(enemyPos.x + 20 * dt, enemyPos.y, enemyPos.z);
         enemy:update(dt)
 
         -- Check collisions Enemy vs Base
         local baseCollided = enemy:collidesWith(base)
         if (baseCollided) then
             -- Force enemy death when it collides with base
-            enemy:die()
+            enemy:kill()
             base:takeDamage(10)
 
             if (base:isDead()) then
@@ -136,7 +186,7 @@ function update(dt)
     end
 
     -- Place tower with CELL
-    if (isLMBpressed()) then
+    if (current_tool == "TowerTool") and (isLMBpressed()) then
         if (cells[castTargetName] ~= nil) and 
             (cells[castTargetName]:getStatus() == "Not Occupied") then
 
@@ -150,7 +200,7 @@ function update(dt)
     end
 
     -- Delete with CELL
-    if (isRMBpressed()) then
+    if (current_tool == "TowerTool") and (isRMBpressed()) then
         if (cells[castTargetName] ~= nil) and (cells[castTargetName]:getStatus() == "Occupied") 
             and (cells[castTargetName]:getType() == "Valid") then
             cells[castTargetName]:removeTower()

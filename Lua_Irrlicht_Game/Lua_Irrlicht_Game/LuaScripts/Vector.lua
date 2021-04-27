@@ -57,12 +57,13 @@ function Vector:__mul(v)
 end
 
 function Vector:new(values) 
-    local vec = values or {}
+    local vec = values or { x = 0, y = 0, z = 0 }
     --local vec = {}
 
     self.__index = self
     
-    setmetatable(vec, self)  
+    setmetatable(vec, self)
+
 
     -- if (values ~= nil and type(values) == "table") then
     --     vec.x = values.x

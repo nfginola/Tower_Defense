@@ -99,17 +99,17 @@ public:
         else if (key == "N") return IsKeyDown(KEY_KEY_N);
         else if (key == "M") return IsKeyDown(KEY_KEY_M);
 
-        else if (key == "1") return IsKeyDown(KEY_KEY_0);
-        else if (key == "2") return IsKeyDown(KEY_KEY_1);
-        else if (key == "3") return IsKeyDown(KEY_KEY_2);
-        else if (key == "4") return IsKeyDown(KEY_KEY_3);
-        else if (key == "5") return IsKeyDown(KEY_KEY_4);
+        else if (key == "1") return IsKeyDown(KEY_KEY_1);
+        else if (key == "2") return IsKeyDown(KEY_KEY_2);
+        else if (key == "3") return IsKeyDown(KEY_KEY_3);
+        else if (key == "4") return IsKeyDown(KEY_KEY_4);
+        else if (key == "5") return IsKeyDown(KEY_KEY_5);
 
-        else if (key == "6") return IsKeyDown(KEY_KEY_5);
-        else if (key == "7") return IsKeyDown(KEY_KEY_6);
-        else if (key == "8") return IsKeyDown(KEY_KEY_7);
-        else if (key == "9") return IsKeyDown(KEY_KEY_8);
-        else if (key == "0") return IsKeyDown(KEY_KEY_9);
+        else if (key == "6") return IsKeyDown(KEY_KEY_6);
+        else if (key == "7") return IsKeyDown(KEY_KEY_7);
+        else if (key == "8") return IsKeyDown(KEY_KEY_8);
+        else if (key == "9") return IsKeyDown(KEY_KEY_9);
+        else if (key == "0") return IsKeyDown(KEY_KEY_0);
 
         else if (key == "LShift") return IsKeyDown(KEY_LSHIFT);
 
@@ -145,17 +145,17 @@ public:
         else if (key == "N") return keyPressedHelper(KEY_KEY_N);
         else if (key == "M") return keyPressedHelper(KEY_KEY_M);
 
-        else if (key == "1") return keyPressedHelper(KEY_KEY_0);
-        else if (key == "2") return keyPressedHelper(KEY_KEY_1);
-        else if (key == "3") return keyPressedHelper(KEY_KEY_2);
-        else if (key == "4") return keyPressedHelper(KEY_KEY_3);
-        else if (key == "5") return keyPressedHelper(KEY_KEY_4);
+        else if (key == "1") return keyPressedHelper(KEY_KEY_1);
+        else if (key == "2") return keyPressedHelper(KEY_KEY_2);
+        else if (key == "3") return keyPressedHelper(KEY_KEY_3);
+        else if (key == "4") return keyPressedHelper(KEY_KEY_4);
+        else if (key == "5") return keyPressedHelper(KEY_KEY_5);
 
-        else if (key == "6") return keyPressedHelper(KEY_KEY_5);
-        else if (key == "7") return keyPressedHelper(KEY_KEY_6);
-        else if (key == "8") return keyPressedHelper(KEY_KEY_7);
-        else if (key == "9") return keyPressedHelper(KEY_KEY_8);
-        else if (key == "0") return keyPressedHelper(KEY_KEY_9);
+        else if (key == "6") return keyPressedHelper(KEY_KEY_6);
+        else if (key == "7") return keyPressedHelper(KEY_KEY_7);
+        else if (key == "8") return keyPressedHelper(KEY_KEY_8);
+        else if (key == "9") return keyPressedHelper(KEY_KEY_9);
+        else if (key == "0") return keyPressedHelper(KEY_KEY_0);
 
         else if (key == "LShift") return keyPressedHelper(KEY_LSHIFT);
     }
@@ -222,7 +222,6 @@ struct LinInterpMover
 
 	vector3df Update(float dt, const std::string& id);
 	void AssignNextMove(const vector3df& start, const vector3df& end, float max_time);
-
 };
 
 struct WorldObject

@@ -24,10 +24,27 @@ public:
             // held down
             m_keyIsDown[event.KeyInput.Key] = event.KeyInput.PressedDown;
 
-            // pressed and released
+            //// pressed and released
+            //if (event.KeyInput.PressedDown == false)
+            //{
+            //    m_keyWasPressed[event.KeyInput.Key] = true;
+            //}
+
+            // check first "down" (a.k.a pressed)
+            if (m_not_held)
+            {
+                m_not_held = false;
+                // transition from false to true
+                if (m_keyWasPressed[event.KeyInput.Key] == false)
+                {
+                    m_keyWasPressed[event.KeyInput.Key] = true;
+                }
+            }
+
+            // allow above check only if it was 
             if (event.KeyInput.PressedDown == false)
             {
-                m_keyWasPressed[event.KeyInput.Key] = true;
+                m_not_held = true;
             }
         }
            
@@ -199,6 +216,8 @@ private:
 
     bool m_rmbPressed = false;
     bool m_rmbDown = false;
+
+    bool m_not_held = true;
 
     bool keyPressedHelper(EKEY_CODE code)
     {

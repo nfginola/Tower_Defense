@@ -13,28 +13,50 @@ function Tower:new(cellID, towerStats)
     if (towerStats.shotsPerSec == nil) then error("Tower Stats must have a 'shotsPerSec' attribute!") end
     if (towerStats.range == nil) then error("Tower Stats must have a 'range' attribute!") end
 
-    local t = 
-    {
-        id = nil,
-        damage = towerStats.damage,
-        shotsPerSec = towerStats.shotsPerSec,
-        maxRange = towerStats.range,
-        rangeMesh = nil,
+    -- local t = 
+    -- {
+    --     id = nil,
+    --     damage = towerStats.damage,
+    --     shotsPerSec = towerStats.shotsPerSec,
+    --     maxRange = towerStats.range,
+    --     rangeMesh = nil,
 
-        timer = 0,
-        readyToShoot = true,
+    --     timer = 0,
+    --     readyToShoot = true,
 
-        enemiesInRange = {},
-        enemiesInRangeID = 1,
+    --     enemiesInRange = {},
+    --     enemiesInRangeID = 1,
 
-        targetEnemy = nil,
+    --     targetEnemy = nil,
 
-        doAnim = false,
-        baseAnimScale = nil,
-        targetAnimScale = nil,
-        animationTimeElapsed = 0,
-        animationTimeMax = (1 / towerStats.shotsPerSec) / 3
-    }
+    --     doAnim = false,
+    --     baseAnimScale = nil,
+    --     targetAnimScale = nil,
+    --     animationTimeElapsed = 0,
+    --     animationTimeMax = (1 / towerStats.shotsPerSec) / 3
+    -- }
+
+    local t = WorldObject:new()
+    t.id = nil
+    t.damage = towerStats.damage
+    t.shotsPerSec = towerStats.shotsPerSec
+    t.maxRange = towerStats.range
+    t.rangeMesh = nil
+
+    t.timer = 0
+    t.readyToShoot = true
+
+    t.enemiesInRange = {}
+    t.enemiesInRangeID = 1
+
+    t.targetEnemy = nil
+
+    t.doAnim = false
+    t.baseAnimScale = nil
+    t.targetAnimScale = nil
+    t.animationTimeElapsed = 0
+    t.animationTimeMax = (1 / towerStats.shotsPerSec) / 3
+
 
     self.__index = self
     setmetatable(t, self) 

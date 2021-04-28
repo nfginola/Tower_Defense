@@ -61,9 +61,7 @@ function Vector:new(values)
     --local vec = {}
 
     self.__index = self
-    
     setmetatable(vec, self)
-
 
     -- if (values ~= nil and type(values) == "table") then
     --     vec.x = values.x

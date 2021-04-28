@@ -18,6 +18,9 @@ function getNextWaypoint(enemyID)
     end
 end
 
+-- Enemy:new()
+-- Enemy:initCRep()
+
 function Enemy:new(spawnPos, enemyStats)
 
     if (type(enemyStats) ~= "table") then error("Enemy Stats must be a table!") end
@@ -25,27 +28,27 @@ function Enemy:new(spawnPos, enemyStats)
     if (enemyStats.damage == nil) then error("Enemy Stats must have a 'damage' attribute!") end
     if (enemyStats.unitsPerSec == nil) then error("Enemy Stats must have a 'unitsPerSec' attribute!") end
 
-    -- local e = 
-    -- {
-    --     id = nil,
-    --     health = enemyStats.maxHealth,
-    --     maxHealth = enemyStats.maxHealth,
-    --     damage = enemyStats.damage,
-    --     unitsPerSec = enemyStats.unitsPerSec,
+    local e = 
+    {
+        id = nil,
+        health = enemyStats.maxHealth,
+        maxHealth = enemyStats.maxHealth,
+        damage = enemyStats.damage,
+        unitsPerSec = enemyStats.unitsPerSec,
 
-    --     baseScale = nil,
+        baseScale = nil,
 
-    --     moveCoroutine = nil
-    -- }
+        moveCoroutine = nil
+    }
 
-    local e = WorldObject:new()
-    e.id = nil
-    e.health = enemyStats.maxHealth
-    e.maxHealth = enemyStats.maxHealth
-    e.damage = enemyStats.damage
-    e.unitsPerSec = enemyStats.unitsPerSec
-    e.baseScale = nil
-    e.moveCoroutine = nil
+    -- local e = WorldObject:new()
+    -- e.id = nil
+    -- e.health = enemyStats.maxHealth
+    -- e.maxHealth = enemyStats.maxHealth
+    -- e.damage = enemyStats.damage
+    -- e.unitsPerSec = enemyStats.unitsPerSec
+    -- e.baseScale = nil
+    -- e.moveCoroutine = nil
 
     self.__index = self
     setmetatable(e, self) 

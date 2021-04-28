@@ -3,15 +3,15 @@ WorldObject = require("LuaScripts/WorldObject")
 local Base = WorldObject:new()
 
 function Base:new(cellID, cellPosition, maxHealth)
-    -- local b = 
-    -- {
-    --     id = nil,
-    --     health = maxHealth
-    -- }
+    local b = 
+    {
+        id = nil,
+        health = maxHealth
+    }
 
-    local b = WorldObject:new()
-    b.id = nil
-    b.health = maxHealth
+    -- local b = WorldObject:new()
+    -- b.id = nil
+    -- b.health = maxHealth
 
     self.__index = self
     setmetatable(b, self) 

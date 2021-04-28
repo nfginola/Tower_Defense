@@ -13,8 +13,8 @@ function WorldObject:new()
     -- VARFÖR FUNKAR INTE DET ATT INITALISERA HÄR??
     -- Det verkar vara SHARED variabel (kolla med size-reduction på Enemies!)
 
-    wo.pos = Vector:new({ x = 0, y = 0, z = 0})
-    wo.scale = Vector:new({ x = 1, y = 1, z = 1})
+    -- wo.pos = Vector:new({ x = 0, y = 0, z = 0})
+    -- wo.scale = Vector:new({ x = 1, y = 1, z = 1})
 
     self.__index = self
     setmetatable(wo, self) 
@@ -26,8 +26,8 @@ end
 function WorldObject:initCRep(id)
     self.cRep = CWorldObject:new(id)
 
-    -- self.pos = Vector:new({ x = 0, y = 0, z = 0})
-    -- self.scale = Vector:new({ x = 1, y = 1, z = 1})
+    self.pos = Vector:new({ x = 0, y = 0, z = 0})
+    self.scale = Vector:new({ x = 1, y = 1, z = 1})
     
     self.id = id
 end

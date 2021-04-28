@@ -6,21 +6,21 @@ Base = require("LuaScripts/Base")
 local Cell = WorldObject:new()
 
 function Cell:new(id, x, z) 
-    -- local c = 
-    -- {
-    --     id = nil,
-    --     occupied = false,
-    --     inhabitant = nil,                -- Base or Tower
-    --     type = "Invalid",                -- "Invalid" (Non-placeable), "Base" (Non-placeable), "Valid" (Tower placeable)
-    --     status = "Not Occupied"          -- "Occupied", "Not Occupied"
-    -- }
+    local c = 
+    {
+        id = nil,
+        occupied = false,
+        inhabitant = nil,                -- Base or Tower
+        type = "Invalid",                -- "Invalid" (Non-placeable), "Base" (Non-placeable), "Valid" (Tower placeable)
+        status = "Not Occupied"          -- "Occupied", "Not Occupied"
+    }
 
-    local c = WorldObject:new()
-    c.id = nil
-    c.occupied = false
-    c.inhabitant = nil
-    c.type = "Invalid"
-    c.status = "Not Occupied"
+    -- local c = WorldObject:new()
+    -- c.id = nil
+    -- c.occupied = false
+    -- c.inhabitant = nil
+    -- c.type = "Invalid"
+    -- c.status = "Not Occupied"
 
     self.__index = self
     setmetatable(c, self) 

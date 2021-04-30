@@ -10,9 +10,6 @@ local WorldObject = {
 function WorldObject:new() 
     local wo = {}
 
-    -- VARFÖR FUNKAR INTE DET ATT INITALISERA HÄR??
-    -- Det verkar vara SHARED variabel (kolla med size-reduction på Enemies!)
-
     -- wo.pos = Vector:new({ x = 0, y = 0, z = 0})
     -- wo.scale = Vector:new({ x = 1, y = 1, z = 1})
 
@@ -26,6 +23,7 @@ end
 function WorldObject:initCRep(id)
     self.cRep = CWorldObject:new(id)
 
+    -- unique
     self.pos = Vector:new({ x = 0, y = 0, z = 0})
     self.scale = Vector:new({ x = 1, y = 1, z = 1})
     

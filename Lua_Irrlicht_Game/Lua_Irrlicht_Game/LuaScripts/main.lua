@@ -111,6 +111,8 @@ function edit_mode(dt)
             if (base == nil) and (cells[castTargetName]:getType() == "Valid") then
                 cells[castTargetName]:setCellType("Base")
                 cells[castTargetName]:placeBase()
+            elseif (cells[castTargetName]:getType() == "Invalid") then
+                print("Cant place base here!")
             else
                 print("Base already placed!")
             end
@@ -182,24 +184,7 @@ function play_mode(dt)
 
 end
 
-function update(dt)
-
-    -- Cast ray and get target cell name
-    castTargetName = cam:castRayForward()
-
-    edit_mode(dt)
-    play_mode(dt)
-
-    -- Let orchestrator give visual feedback (lines)
-    orchestrator:update(dt)
-
-    -- Move camera with default FPS cam settings
-    cam:move(dt)
-
-    if (isKeyPressed("G")) then
-        cam:toggleActive()
-    end
-
+function update_game_objects(dt)
     -- Go over all enemies and towers and set states
     for k, enemy in pairs(enemies) do
         local enemyPos = enemy:getPosition()
@@ -250,5 +235,26 @@ function update(dt)
         enemies[k] = nil
     end
     enemies_to_delete = {}  -- reset
+end
+
+function update(dt)
+
+    -- Cast ray and get target cell name
+    castTargetName = cam:castRayForward()
+
+    edit_mode(dt)
+    play_mode(dt)
+
+    orchestrator:update(dt)
+
+    -- Move camera with default FPS cam settings
+    cam:move(dt)
+
+    if (isKeyPressed("G")) then
+        cam:toggleActive()
+    end
+
+    update_game_objects(dt)
+
     
 end

@@ -10,11 +10,12 @@ function EnemyOrchestrator:new()
         cellsAffected = {},
         waypointsConfirmed = false,
 
+        -- below are specific variables for spawning enemies
+        -- (wave interval, groups, etc.)
+
         waveSpawnerCoroutine = nil,
         wavePauseTimer = 0
 
-        -- below are specific variables for spawning enemies
-        -- (wave interval, groups, etc.)
     }
 
     self.__index = self
@@ -24,8 +25,9 @@ function EnemyOrchestrator:new()
     -- This is resumed after every wave has been completed
     o.waveSpawnerCoroutine = coroutine.create(
         function ()
-            local amountOfWaves = 10
+            local amountOfWaves = 10 -- should be from file
             for i = 1, amountOfWaves do
+                -- make waves
                 -- self.currentWave = EnemyWave:new(waveData[i].spawnInterval, waveData[i].enemyCount, self:spawnEnemy)
                 coroutine.yield()  
             end
@@ -34,6 +36,49 @@ function EnemyOrchestrator:new()
 
 
     return o
+end
+
+function EnemyOrchestrator:update(dt)
+
+    -- Draw waypoints
+    if (#self.waypoints > 1) and (self.showWaypoints == true) then
+        for i = 1, #self.waypoints - 1 do
+            local st = cells[self.waypoints[i]]:getPosition()
+            local ed = cells[self.waypoints[i+1]]:getPosition()
+
+            -- Make it easier to see :)
+            posDrawLine(st.x, enemy_ground_height, st.z, ed.x, enemy_ground_height, ed.z)
+            posDrawLine(st.x, enemy_ground_height + 0.1, st.z, ed.x, enemy_ground_height - 0.1, ed.z)
+            posDrawLine(st.x, enemy_ground_height - 0.1, st.z, ed.x, enemy_ground_height + 0.1, ed.z)
+            posDrawLine(st.x + 0.1, enemy_ground_height, st.z, ed.x - 0.1, enemy_ground_height, ed.z)
+            posDrawLine(st.x - 0.1, enemy_ground_height, st.z, ed.x + 0.1, enemy_ground_height, ed.z)
+            posDrawLine(st.x, enemy_ground_height, st.z + 0.1, ed.x, enemy_ground_height, ed.z - 0.1)
+            posDrawLine(st.x, enemy_ground_height, st.z - 0.1, ed.x, enemy_ground_height, ed.z + 0.1)
+        
+        end
+    end
+
+    --[[
+
+    -- Start the wave system once the waypoints are confirmed
+    if (self.waypointsConfirmed) then
+
+        local waveDone = self.currentWave:update(dt)
+        if (waveDone) then
+            self.wavePauseTimer = wavePauseTimer + dt
+
+            if (self.wavePauseTimer > self.levelWavePauseTime) then
+                self.wavePauseTimer = 0
+                coroutine.resume(self.waveSpawnerCoroutine)
+            end
+        end
+        --> After coroutine resumes --> currentWave changes and waveDone should be false all the way
+        --> Until that wave is done..
+
+    end
+
+    ]]
+
 end
 
 function getSmallerAndBigger(val1, val2)
@@ -190,43 +235,7 @@ function EnemyOrchestrator:confirmWaypoints()
     
 end
 
-function EnemyOrchestrator:update(dt)
 
-    -- Draw waypoints
-    if (#self.waypoints > 1) and (self.showWaypoints == true) then
-        for i = 1, #self.waypoints - 1 do
-            local st = cells[self.waypoints[i]]:getPosition()
-            local ed = cells[self.waypoints[i+1]]:getPosition()
-
-            -- Make it easier to see :)
-            posDrawLine(st.x, enemy_ground_height, st.z, ed.x, enemy_ground_height, ed.z)
-            posDrawLine(st.x, enemy_ground_height + 0.1, st.z, ed.x, enemy_ground_height - 0.1, ed.z)
-            posDrawLine(st.x, enemy_ground_height - 0.1, st.z, ed.x, enemy_ground_height + 0.1, ed.z)
-            posDrawLine(st.x + 0.1, enemy_ground_height, st.z, ed.x - 0.1, enemy_ground_height, ed.z)
-            posDrawLine(st.x - 0.1, enemy_ground_height, st.z, ed.x + 0.1, enemy_ground_height, ed.z)
-            posDrawLine(st.x, enemy_ground_height, st.z + 0.1, ed.x, enemy_ground_height, ed.z - 0.1)
-            posDrawLine(st.x, enemy_ground_height, st.z - 0.1, ed.x, enemy_ground_height, ed.z + 0.1)
-        
-        end
-    end
-
-    --[[
-
-    local waveDone = self.currentWave:update(dt)
-    if (waveDone) then
-        self.wavePauseTimer = wavePauseTimer + dt
-
-        if (self.wavePauseTimer > self.levelWavePauseTime) then
-            self.wavePauseTimer = 0
-            coroutine.resume(self.waveSpawnerCoroutine)
-        end
-    end
-    --> After coroutine resumes --> currentWave changes and waveDone should be false all the way
-    --> Until that wave is done..
-
-    ]]
-
-end
 
 function EnemyOrchestrator:spawnEnemy()
 

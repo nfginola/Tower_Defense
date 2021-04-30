@@ -1,0 +1,51 @@
+gridsize = X_Z
+
+basepos = X_Z
+
+
+
+
+waypointsStart
+"id1"
+"id2"
+"id3"
+..
+waypointsEnd
+
+
+invalidsStart
+"id1"
+"id2"
+"id3"
+..
+invalidsEnd
+
+
+
+
+waveStart
+
+waveCount = 4       (int)
+pauseInterval = 5   (seconds)
+
+perWaveStart
+spawnInterval = 0.5
+spawnCount = 30
+
+spawnInterval = 0.5
+spawnCount = 30
+
+spawnInterval = 0.5
+spawnCount = 30
+
+spawnInterval = 0.5
+spawnCount = 30
+
+perWaveEnd
+
+
+waveEnd
+
+
+
+

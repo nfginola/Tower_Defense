@@ -5,6 +5,11 @@ Cell = require("LuaScripts/Cell")
 Enemy = require("LuaScripts/Enemy")
 EnemyOrchestrator = require("LuaScripts/EnemyOrchestrator")
 
+--[[
+ImporterExporter --> Talks directly with associated entities (e.g Global orchestrator, base, cells, etc.) during init
+--> Talks directly with above entities when ordered to submit to file!
+]]
+
 base = nil
 towers = {}
 cells = {}
@@ -117,7 +122,7 @@ function edit_mode(dt)
         if (isLMBpressed()) then
             if (cells[castTargetName]:getType() == "Valid") then
                 cells[castTargetName]:setCellType("Invalid")
-                cells[castTargetName].cRep:setTexture("resources/textures/lavasand.jpg")
+                cells[castTargetName].cRep:setTexture("resources/textures/lavainvalid.jpg")
                 invalids[castTargetName] = castTargetName
             end
 

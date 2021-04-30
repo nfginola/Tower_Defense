@@ -165,12 +165,12 @@ function EnemyOrchestrator:confirmWaypoints()
         ]]
 
         for key, cellID in pairs(self.cellsAffected) do
-            if (cells[cellID]:getType() ~= "Base") then
+            if (cells[cellID]:getType() ~= "Base") and (cellID ~= self.spawnCell) then
 
                 -- If tower was in the way, remove it
                 cells[cellID]:removeTower()
                 cells[cellID]:setCellType("Invalid")
-                cells[cellID].cRep:setTexture("resources/textures/lava.jpg")
+                cells[cellID].cRep:setTexture("resources/textures/lavasand.jpg")
 
                 -- print(cellID)
             end
@@ -235,14 +235,6 @@ function EnemyOrchestrator:spawnEnemy()
         print("No spawn point set for enemies!")
     end
 end
-
---[[
-
-    function writeToFile()
-
-    function readFromFile()
-
-]]
 
 
 return EnemyOrchestrator

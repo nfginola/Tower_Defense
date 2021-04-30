@@ -127,23 +127,12 @@ function edit_mode(dt)
                 cells[castTargetName].cRep:setTexture("resources/textures/lavainvalid.jpg")
                 invalids[castTargetName] = castTargetName
             end
-
-            -- print("\n")
-            -- for k, v in pairs(invalids) do
-            --     print(k, ": ", v)
-            -- end
-
         elseif (isRMBpressed()) then
             if (cells[castTargetName]:getType() == "Invalid") then
                 cells[castTargetName]:setCellType("Valid")
                 cells[castTargetName].cRep:setTexture("resources/textures/sand.jpg")
                 invalids[castTargetName] = nil
             end
-
-            -- print("\n")
-            -- for k, v in pairs(invalids) do
-            --     print(k, ": ", v)
-            -- end
         elseif (isKeyPressed("R")) then
             for k, cellID in pairs(invalids) do
                 cells[cellID]:setCellType("Valid")
@@ -158,14 +147,16 @@ function play_mode(dt)
     if (isKeyPressed("3")) then
         current_tool = "TowerTool"
         print("Current tool is: " .. current_tool)
-    elseif (isKeyPressed("4")) then -- Temp dev tool
+    elseif (isKeyPressed("4")) then
         current_tool = "EnemySpawnTool"
-        print("Current tool is: " .. current_tool)
+        print("Current tool is: " .. current_tool)        
     end
 
     -- Create enemy
-    if (current_tool == "EnemySpawnTool") and (isLMBpressed()) then
-        orchestrator:spawnEnemy()
+    if (current_tool == "EnemySpawnTool") then
+        if (isLMBpressed()) then
+            orchestrator:startWaveSystem()
+        end
     end
 
     -- Place tower with CELL
@@ -199,11 +190,7 @@ function update_game_objects(dt)
         if (baseCollided) then
             -- Force enemy death when it collides with base
             enemy:kill()
-            base:takeDamage(10)
-
-            if (base:isDead()) then
-                print("Base died!")
-            end
+            base:takeDamage(enemy.damage)
         end
 
         -- Check Enemy vs Tower
@@ -238,7 +225,19 @@ function update_game_objects(dt)
         enemies[k].cRep:removeNode()
         enemies[k] = nil
     end
-    enemies_to_delete = {}  -- reset
+    enemies_to_delete = {}  -- Reset enemies marked for deletion
+end
+
+canWin = true
+function update_game_state(dt)
+    if (orchestrator:isDoneSpawning()) and (get_table_length(enemies) == 0) and (not base:isDead()) then
+        if (canWin) then
+            print("You've won the game!")
+            canWin = false
+        end
+    end
+
+
 end
 
 function update(dt)
@@ -259,6 +258,27 @@ function update(dt)
     end
 
     update_game_objects(dt)
+    update_game_state(dt)
 
-    
+end
+
+
+
+
+-- =======================
+
+function get_table_length(tab)
+    local count = 0
+    for k, v in pairs(tab) do
+        count = count + 1
+    end
+    return count
+end
+
+function getSmallerAndBigger(val1, val2)
+    if (val2 < val1) then
+        val1, val2 = val2, val1
+    end
+
+    return val1, val2
 end

@@ -105,7 +105,7 @@ function Tower:update(dt)
 
     self.targetEnemy = self:getCurrentEnemyFirstIn()
 
-    -- Debug draw line
+    -- Draw to-target line
     if (self.targetEnemy ~= nil) then
         self.cRep:drawLine(self.targetEnemy.cRep)
     end
@@ -143,7 +143,7 @@ function Tower:update(dt)
 
 end
 
--- Gets the enemy that came in first within the current list of enemies in range.
+-- Gets the enemy that came in first within the CURRENT list of enemies in range.
 -- This naive solution should be O.K with the assumption that enemiesInRange table
 -- does not get too large! :)
 function Tower:getCurrentEnemyFirstIn() 

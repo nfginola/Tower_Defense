@@ -1,15 +1,8 @@
 local EnemyOrchestrator = {}
-
-function getSmallerAndBigger(val1, val2)
-    if (val2 < val1) then
-        val1, val2 = val2, val1
-    end
-
-    return val1, val2
-end
+EnemyWave = require("LuaScripts/EnemyWave")
 
 function EnemyOrchestrator:new()
-    o = {
+    local o = {
         waypoints = {},
         spawnCell = "",
         showWaypoints = true,
@@ -19,27 +12,45 @@ function EnemyOrchestrator:new()
         -- below are specific variables for spawning enemies
         -- (wave interval, groups, etc.)
 
+        waveSystemStarted = false,
+        lastWaveSpawned = false,
+        lastWaveSpawnedFully = false,
+
+        waveSpawnerFunc = nil,
         waveSpawnerCoroutine = nil,
-        wavePauseTimer = 0
+        currentWave = nil,
+        
+        wavePauseTimer = 0,
+
+        -- Below set by file
+        levelWavePauseTime = 2,
+        levelWaveAmount = 3,
+        levelWavesData = {}
 
     }
 
     self.__index = self
     setmetatable(o, self)
 
+    -- Temp wave config
+    table.insert(o.levelWavesData, { spawnInterval = 0.1, enemyCount = 10 })
+    table.insert(o.levelWavesData, { spawnInterval = 0.5, enemyCount = 5 })
+    table.insert(o.levelWavesData, { spawnInterval = 0.1, enemyCount = 3 })
 
-    -- This is resumed after every wave has been completed
-    o.waveSpawnerCoroutine = coroutine.create(
-        function ()
-            local amountOfWaves = 10 -- should be from file
-            for i = 1, amountOfWaves do
-                -- make waves
-                -- self.currentWave = EnemyWave:new(waveData[i].spawnInterval, waveData[i].enemyCount, self:spawnEnemy)
-                coroutine.yield()  
+    -- Function for coroutine
+    o.waveSpawnerFunc = function ()
+        for i = 1, o.levelWaveAmount do
+            -- make waves
+            o.currentWave = EnemyWave:new(o.levelWavesData[i].spawnInterval, o.levelWavesData[i].enemyCount, o.spawnCell)
+            -- o.currentWave = EnemyWave:new(spawnInterval, enemyCount, o.spawnCell)
+            print("Spawned")
+            if (i < o.levelWaveAmount) then
+                coroutine.yield(false)  -- last wave spawned not true
+            else
+                coroutine.yield(true)   -- last wave spawned true
             end
         end
-    )
-
+    end
 
     return o
 end
@@ -64,28 +75,63 @@ function EnemyOrchestrator:update(dt)
         end
     end
 
-    --[[
+    -- Is current wave done spawning?
+    local waveDone = false
+    if (self.currentWave ~= nil) then
+        waveDone = self.currentWave:update(dt)
+    end
 
-    -- Start the wave system once the waypoints are confirmed
-    if (self.waypointsConfirmed) then
-
-        local waveDone = self.currentWave:update(dt)
+    -- Start the wave sysystem
+    if (self.waveSystemStarted) then
+        -- If done --> Try to spawn new wave
         if (waveDone) then
-            self.wavePauseTimer = wavePauseTimer + dt
+            self.wavePauseTimer = self.wavePauseTimer + dt
 
             if (self.wavePauseTimer > self.levelWavePauseTime) then
                 self.wavePauseTimer = 0
-                coroutine.resume(self.waveSpawnerCoroutine)
+
+                -- Try to spawn new wave
+                local co, isLastWave = coroutine.resume(self.waveSpawnerCoroutine)
+                waveDone = false -- New wave meaning wave is not done!
+
+                -- If last wave has spawned, we can turn off our wave spawning system
+                if (isLastWave) then
+                    self.lastWaveSpawned = true -- state to track game end
+                    self.waveSystemStarted = false  -- turn off wave sys
+                end
             end
         end
-        --> After coroutine resumes --> currentWave changes and waveDone should be false all the way
-        --> Until that wave is done..
-
     end
 
-    ]]
-
+    -- Last wave done spawning completely
+    if (self.lastWaveSpawned) and (waveDone) then
+        self.currentWave = nil
+        self.lastWaveSpawnedFully = true
+    end
 end
+
+function EnemyOrchestrator:resetWaveSystem()
+    self.currentWave = nil
+    self.lastWaveSpawnedFully = false
+    self.lastWaveSpawned = false
+    self.waveSystemStarted = false
+end
+
+function EnemyOrchestrator:startWaveSystem()
+    if (not self.waveSystemStarted) and (self.currentWave == nil) then
+        self:resetWaveSystem()
+        self.waveSpawnerCoroutine = coroutine.create(self.waveSpawnerFunc)
+
+        self.waveSystemStarted = true
+        coroutine.resume(self.waveSpawnerCoroutine)
+    end
+end
+
+function EnemyOrchestrator:isDoneSpawning()
+    return self.lastWaveSpawnedFully
+end
+
+-- ============
 
 function EnemyOrchestrator:addWaypoint(cell)
     if (self.waypointsConfirmed == true) then error("Waypoints already confirmed..") end
@@ -174,6 +220,10 @@ function EnemyOrchestrator:resetWaypoints()
 
     self.waypointsConfirmed = false
     self.cellsAffected = {} -- reset
+
+    -- Reset wave system when waypoints are reset
+    self:resetWaveSystem()
+
 end
 
 function EnemyOrchestrator:setSpawnCell(cellID)
@@ -188,14 +238,6 @@ function EnemyOrchestrator:setSpawnCell(cellID)
         cells[self.spawnCell].cRep:setTexture("resources/textures/lava.jpg")
         cells[self.spawnCell]:setCellType("Waypoint") -- Make sure other tools cant change spawn cell..
     end
-end
-
-function EnemyOrchestrator:getWaypoints()
-    return self.waypoints
-end
-
-function EnemyOrchestrator:getSpawnPosition()
-    return cells[self.spawnCell]:getPosition()
 end
 
 function EnemyOrchestrator:confirmWaypoints()
@@ -214,32 +256,19 @@ function EnemyOrchestrator:confirmWaypoints()
                 cells[cellID]:removeTower()
                 cells[cellID]:setCellType("Waypoint")
                 cells[cellID].cRep:setTexture("resources/textures/lavasand.jpg")
-
-                -- print(cellID)
             end
+        end
         
 
-            --cells[cellID]:removeTower()
-        end
-
-    end
-
-
-    
-end
-
-function EnemyOrchestrator:spawnEnemy()
-
-    if (self.spawnCell ~= "") then
-        local newEnemy = Enemy:new(
-            self:getSpawnPosition(),
-            { maxHealth = 40, damage = 10, unitsPerSec = 40}
-        )
-        enemies[newEnemy.id] = newEnemy
-    else
-        print("No spawn point set for enemies!")
     end
 end
 
+function EnemyOrchestrator:getWaypoints()
+    return self.waypoints
+end
+
+function EnemyOrchestrator:getSpawnPosition()
+    return cells[self.spawnCell]:getPosition()
+end
 
 return EnemyOrchestrator

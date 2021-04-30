@@ -35,7 +35,7 @@ end
 function Base:takeDamage(damage)
     if (type(damage) ~= "number") then error("takeDamage can only take number argument!") end
     self.health = self.health - damage
-    print("Base HP left: " .. self.health)
+    -- print("Base HP left: " .. self.health)
 end
 
 function Base:getCellID()

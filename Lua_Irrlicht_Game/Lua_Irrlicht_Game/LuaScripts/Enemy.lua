@@ -41,15 +41,6 @@ function Enemy:new(spawnPos, enemyStats)
         moveCoroutine = nil
     }
 
-    -- local e = WorldObject:new()
-    -- e.id = nil
-    -- e.health = enemyStats.maxHealth
-    -- e.maxHealth = enemyStats.maxHealth
-    -- e.damage = enemyStats.damage
-    -- e.unitsPerSec = enemyStats.unitsPerSec
-    -- e.baseScale = nil
-    -- e.moveCoroutine = nil
-
     self.__index = self
     setmetatable(e, self) 
 

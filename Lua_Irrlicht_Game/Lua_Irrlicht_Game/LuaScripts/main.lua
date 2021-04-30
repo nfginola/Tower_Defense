@@ -108,7 +108,7 @@ function edit_mode(dt)
             end
         elseif (isLMBpressed()) then
             -- Place base
-            if (base == nil) then
+            if (base == nil) and (cells[castTargetName]:getType() == "Valid") then
                 cells[castTargetName]:setCellType("Base")
                 cells[castTargetName]:placeBase()
             else
@@ -200,7 +200,6 @@ function update(dt)
         cam:toggleActive()
     end
 
-
     -- Go over all enemies and towers and set states
     for k, enemy in pairs(enemies) do
         local enemyPos = enemy:getPosition()
@@ -244,7 +243,6 @@ function update(dt)
     for k, tower in pairs(towers) do
         tower:update(dt)        
     end
-
 
     -- Remove the enemies marked for deletion
     for k, delete in pairs(enemies_to_delete) do

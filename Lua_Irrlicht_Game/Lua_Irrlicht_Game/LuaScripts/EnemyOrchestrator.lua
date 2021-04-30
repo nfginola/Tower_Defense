@@ -26,7 +26,7 @@ function EnemyOrchestrator:new()
         function ()
             local amountOfWaves = 10
             for i = 1, amountOfWaves do
-                self.currentWave = EnemyWave:new(waveData[i].spawnInterval, waveData[i].enemyCount)
+                -- self.currentWave = EnemyWave:new(waveData[i].spawnInterval, waveData[i].enemyCount, self:spawnEnemy)
                 coroutine.yield()  
             end
         end

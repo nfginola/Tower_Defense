@@ -11,7 +11,7 @@ function Cell:new(id, x, z)
         id = nil,
         occupied = false,
         inhabitant = nil,                -- Base or Tower
-        type = "Invalid",                -- "Invalid" (Non-placeable), "Base" (Non-placeable), "Valid" (Tower placeable)
+        type = "Invalid",                -- "Invalid" (Non-placeable), "Base" (Non-placeable), "Valid" (Tower placeable), "Waypoint"
         status = "Not Occupied"          -- "Occupied", "Not Occupied"
     }
 
@@ -44,8 +44,9 @@ function Cell:setCellType(type_in)
     if (type(type_in) ~= "string") then error("Set Cell Type only accepts string!") end
     if (type_in ~= "Invalid") and 
         (type_in ~= "Base") and
-        (type_in ~= "Valid") then
-            error("Set Cell Type only accepts 'Invalid', 'Base' and 'Valid'")
+        (type_in ~= "Valid") and
+        (type_in ~= "Waypoint") then
+            error("Set Cell Type only accepts 'Invalid', 'Base', 'Valid', 'Waypoint'")
         end
 
     self.type = type_in

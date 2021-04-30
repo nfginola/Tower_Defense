@@ -33,7 +33,7 @@ public:
             // check first "down" (a.k.a pressed)
             if (m_not_held)
             {
-                m_not_held = false;
+                m_not_held = false; 
                 // transition from false to true
                 if (m_keyWasPressed[event.KeyInput.Key] == false)
                 {
@@ -267,17 +267,6 @@ struct Camera
     ICameraSceneNode* sceneCam = nullptr;
     bool active = true;
 };
-
-//struct Vector3
-//{
-//    float x = 0.f;
-//    float y = 0.f;
-//    float z = 0.f;
-//
-//    float length() const;
-//    Vector3& normalize();
-//};
-
 
 class Game
 {

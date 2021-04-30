@@ -113,8 +113,12 @@ function EnemyOrchestrator:resetWaypoints()
     -- Reset spawn cell texture
     if (self.spawnCell ~= "") then
         cells[self.spawnCell].cRep:setTexture("resources/textures/sand.jpg")
-        self.spawnCell = ""
     end
+
+    -- Reset cell type
+    cells[self.spawnCell]:setCellType("Valid")
+
+    self.spawnCell = ""
 
     -- Reset affected cells
     for key, cellID in pairs(self.cellsAffected) do
@@ -140,6 +144,7 @@ function EnemyOrchestrator:setSpawnCell(cellID)
         print("Spawn set at: " .. cellID)
         -- Set cell to spawn texture
         cells[self.spawnCell].cRep:setTexture("resources/textures/lava.jpg")
+        cells[self.spawnCell]:setCellType("Waypoint") -- Make sure other tools cant change spawn cell..
     end
 end
 
@@ -169,7 +174,7 @@ function EnemyOrchestrator:confirmWaypoints()
 
                 -- If tower was in the way, remove it
                 cells[cellID]:removeTower()
-                cells[cellID]:setCellType("Invalid")
+                cells[cellID]:setCellType("Waypoint")
                 cells[cellID].cRep:setTexture("resources/textures/lavasand.jpg")
 
                 -- print(cellID)

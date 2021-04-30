@@ -74,6 +74,19 @@ function init()
 
 end
 
+--[[
+
+    To-do:
+        Irrlicht TextBox! (To add EnemyWave elements on the fly)
+
+    --> Set up local table and insert Level variables and Wave configs
+    --> Click some confirm button
+    --> orchestrator:submitLevelConfig(tab)
+        --> overwrite existing coroute function (with the configs)
+        --> set level variables and wave coinfigs
+
+]]
+
 function edit_mode(dt)  
     if (isKeyPressed("1")) then
         current_tool = "BaseTool"

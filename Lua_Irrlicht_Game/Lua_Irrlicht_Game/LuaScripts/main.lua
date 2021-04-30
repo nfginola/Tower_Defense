@@ -230,6 +230,8 @@ end
 
 canWin = true
 function update_game_state(dt)
+
+    -- Check win state
     if (orchestrator:isDoneSpawning()) and (get_table_length(enemies) == 0) and (not base:isDead()) then
         if (canWin) then
             print("You've won the game!")

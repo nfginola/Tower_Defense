@@ -81,7 +81,7 @@ function EnemyOrchestrator:update(dt)
         waveDone = self.currentWave:update(dt)
     end
 
-    -- Start the wave sysystem
+    -- Start the wave system
     if (self.waveSystemStarted) then
         -- If done --> Try to spawn new wave
         if (waveDone) then
@@ -96,8 +96,8 @@ function EnemyOrchestrator:update(dt)
 
                 -- If last wave has spawned, we can turn off our wave spawning system
                 if (isLastWave) then
-                    self.lastWaveSpawned = true -- state to track game end
-                    self.waveSystemStarted = false  -- turn off wave sys
+                    self.lastWaveSpawned = true
+                    self.waveSystemStarted = false  -- turn off wave spawn sys (because last wave spawned)
                 end
             end
         end

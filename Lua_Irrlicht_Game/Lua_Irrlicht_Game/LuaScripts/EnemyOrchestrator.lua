@@ -89,7 +89,6 @@ function getSmallerAndBigger(val1, val2)
     return val1, val2
 end
 
-
 function EnemyOrchestrator:addWaypoint(cell)
     if (self.waypointsConfirmed == true) then error("Waypoints already confirmed..") end
 
@@ -234,8 +233,6 @@ function EnemyOrchestrator:confirmWaypoints()
 
     
 end
-
-
 
 function EnemyOrchestrator:spawnEnemy()
 

@@ -100,7 +100,7 @@ end
 
 function getCellNumber(cellID)
     local delim = ","
-    local cellNumbers = string.sub(cellID, 3, #cellID) .. ","
+    local cellNumbers = string.sub(cellID, 3, #cellID) .. delim
     local elements = {}
     for element in (cellNumbers):gmatch("([^" .. delim .. "]*)" .. delim) do 
         table.insert(elements, element) 

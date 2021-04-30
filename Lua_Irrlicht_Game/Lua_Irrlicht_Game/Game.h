@@ -39,12 +39,13 @@ public:
                 {
                     m_keyWasPressed[event.KeyInput.Key] = true;
                 }
-            }
+            }   
 
-            // allow above check only if it was 
+            // allow above check again only if has been released
             if (event.KeyInput.PressedDown == false)
             {
                 m_not_held = true;
+                m_keyWasPressed[event.KeyInput.Key] = false;    // if released, we make sure to turn it off
             }
         }
            

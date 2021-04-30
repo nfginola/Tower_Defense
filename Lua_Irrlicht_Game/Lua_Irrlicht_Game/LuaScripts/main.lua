@@ -11,24 +11,25 @@ cells = {}
 enemies = {}
 orchestrator = EnemyOrchestrator:new()
 
-
 -- Ray cast target
 castTargetName = nil
 
+-- Marked for deletion
 enemies_to_delete = {}
 
 -- Create FPS cam
 cam = Camera:new()
 cam:createFPSCam()
 
---[[
+-- BaseTool
+-- WaypointTool
+-- TowerTool
+-- EnemyTool
+-- ValidTool
+current_tool = ""
 
-WAY TO SOLVE THE AMOUNT OF TOWER VS ENEMY CHECKING?
+invalids = {}
 
-NO NEED!!
-Christopher: Du behöver inte hantera den optimeringen
-
-]]
 
 function init()
     print("[LUA]: Init")
@@ -66,28 +67,17 @@ function init()
     cells[baseCellID]:placeBase()
 
 
-    -- -- Initialize waypoints
-    -- orchestrator:setSpawn("cg4,5")
-    -- waypoints = { "cg1,5", "cg1,1", "cg3,1", "cg3,4", "cg5,4", "cg5,1", "cg8,1" }
-    -- -- waypoints = { "cg1,1", "cg5,1" }
-    -- for i = 1, #waypoints do
-    --     orchestrator:addWaypoint(waypoints[i])
-    -- end
-
 end
 
--- BaseTool
--- WaypointTool
--- TowerTool
--- EnemyTool
-current_tool = ""
-
-function edit_mode(dt)
+function edit_mode(dt)  
     if (isKeyPressed("1")) then
         current_tool = "BaseTool"
         print("Current tool is: " .. current_tool)
     elseif (isKeyPressed("2")) then
         current_tool = "WaypointTool"
+        print("Current tool is: " .. current_tool)
+    elseif (isKeyPressed("5")) then
+        current_tool = "ValidTool"
         print("Current tool is: " .. current_tool)
     end
     
@@ -97,50 +87,114 @@ function edit_mode(dt)
             orchestrator:resetWaypoints()
         elseif (isLMBpressed()) then
             orchestrator:addWaypoint(castTargetName)
-        elseif (isKeyPressed("O")) then
-            orchestrator:confirmWaypoints()
         end
     end
 
+    -- Base tool
+    if (current_tool == "BaseTool") then
+        if (isRMBpressed()) then
+            -- Remove base
+            local wasBase = cells[castTargetName]:getType() == "Base"
 
+            cells[castTargetName]:removeBase()
+            
+            if (wasBase) then
+                orchestrator:resetWaypoints()   -- force reset waypoints if move base
+            end
+        elseif (isLMBpressed()) then
+            -- Place base
+            if (base == nil) then
+                cells[castTargetName]:setCellType("Base")
+                cells[castTargetName]:placeBase()
+            else
+                print("Base already placed!")
+            end
+        end
+    end
+
+    -- Valid tool
+    if (current_tool == "ValidTool") then
+        if (isLMBpressed()) then
+            if (cells[castTargetName]:getType() == "Valid") then
+                cells[castTargetName]:setCellType("Invalid")
+                cells[castTargetName].cRep:setTexture("resources/textures/lavasand.jpg")
+                invalids[castTargetName] = castTargetName
+            end
+
+            -- print("\n")
+            -- for k, v in pairs(invalids) do
+            --     print(k, ": ", v)
+            -- end
+
+        elseif (isRMBpressed()) then
+            if (cells[castTargetName]:getType() == "Invalid") then
+                cells[castTargetName]:setCellType("Valid")
+                cells[castTargetName].cRep:setTexture("resources/textures/sand.jpg")
+                invalids[castTargetName] = nil
+            end
+
+            -- print("\n")
+            -- for k, v in pairs(invalids) do
+            --     print(k, ": ", v)
+            -- end
+
+
+        end
+    end
 end
 
-function update(dt)
-
-    edit_mode(dt)
-
+function play_mode(dt)
     if (isKeyPressed("3")) then
         current_tool = "TowerTool"
         print("Current tool is: " .. current_tool)
-    elseif (isKeyPressed("4")) then
+    elseif (isKeyPressed("4")) then -- Temp dev tool
         current_tool = "EnemySpawnTool"
         print("Current tool is: " .. current_tool)
-    end
-
-    orchestrator:update(dt)
-
-    -- Move camera with default FPS cam settings
-    cam:move(dt)
-
-    if (isKeyPressed("G")) then
-        cam.cRep:toggleActive()
-    end
-
-    -- Cast ray and get target cell name
-    castTargetName = cam:castRayForward()
-
-    -- Toggle range visible
-    if (isKeyPressed("H")) then
-        towerRangeHidden = not towerRangeHidden -- Modify global in Tower.lua to sync visibility
-        for k, tower in pairs(towers) do
-            tower:toggleRangeVisible()
-        end
     end
 
     -- Create enemy
     if (current_tool == "EnemySpawnTool") and (isLMBpressed()) then
         orchestrator:spawnEnemy()
     end
+
+    -- Place tower with CELL
+    if (current_tool == "TowerTool") and (isLMBpressed()) then
+        cells[castTargetName]:placeTower()
+    end
+
+    -- Delete with CELL
+    if (current_tool == "TowerTool") and (isRMBpressed()) then
+        cells[castTargetName]:removeTower()
+    end
+
+    -- Toggle tower range visible
+    if (isKeyPressed("H")) then
+        towerRangeHidden = not towerRangeHidden -- Modify global in Tower.lua to sync visibility
+        for k, tower in pairs(towers) do
+                tower:toggleRangeVisible()
+        end
+    end
+
+end
+
+function update(dt)
+
+    -- Cast ray and get target cell name
+    castTargetName = cam:castRayForward()
+
+    edit_mode(dt)
+    play_mode(dt)
+
+    -- Let orchestrator give visual feedback (lines)
+    orchestrator:update(dt)
+
+    -- Move camera with default FPS cam settings
+    cam:move(dt)
+
+    if (isKeyPressed("G")) then
+        cam:toggleActive()
+    end
+
 
     -- Go over all enemies and towers and set states
     for k, enemy in pairs(enemies) do
@@ -186,30 +240,6 @@ function update(dt)
         tower:update(dt)        
     end
 
-    -- Place tower with CELL
-    if (current_tool == "TowerTool") and (isLMBpressed()) then
-        if (cells[castTargetName] ~= nil) and 
-            (cells[castTargetName]:getStatus() == "Not Occupied") then
-
-            if (towers[castTargetName] ~= nil) then error("Something is wrong!") end
-
-            towers[castTargetName] = cells[castTargetName]:placeTower()
-            
-        else
-            print("Cell occupied!")
-        end
-    end
-
-    -- Delete with CELL
-    if (current_tool == "TowerTool") and (isRMBpressed()) then
-        if (cells[castTargetName] ~= nil) and (cells[castTargetName]:getStatus() == "Occupied") 
-            and (cells[castTargetName]:getType() == "Valid") then
-            cells[castTargetName]:removeTower()
-            towers[castTargetName] = nil
-        else
-            print("No tower here")
-        end
-    end
 
     -- Remove the enemies marked for deletion
     for k, delete in pairs(enemies_to_delete) do

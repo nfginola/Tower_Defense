@@ -53,22 +53,29 @@ end
 
 function Cell:placeTower()
     if (self.type ~= "Valid") then error("Cell not valid! Cannot place tower!") end
+    if (self.status == "Occupied") then error("Cell occupied! Cannot place tower!") end
 
     self.inhabitant = Tower:new(self.id, { damage = 10, shotsPerSec = 3, range = 25})
     self.status = "Occupied"
-    
-    return self.inhabitant
+
+    towers[self.inhabitant.id] = self.inhabitant
 end
 
 function Cell:removeTower()
-    self.inhabitant.cRep:toggleVisible()
+    if (self.type == "Valid") and (self.status == "Occupied") then
 
-    if (towerRangeHidden == false) then
-        self.inhabitant.rangeMesh.cRep:toggleVisible() 
+        -- hide immediately (emulate instant deletion)
+        self.inhabitant.cRep:toggleVisible()   
+        if (towerRangeHidden == false) then
+            self.inhabitant.rangeMesh.cRep:toggleVisible() 
+        end
+        
+        towers[self.inhabitant.id] = nil
+        self.inhabitant = nil
+        self.status = "Not Occupied"
+    --else
+    --    print("No tower to delete")
     end
-    
-    self.inhabitant = nil
-    self.status = "Not Occupied"
 end
 
 function Cell:placeBase()
@@ -81,10 +88,13 @@ function Cell:placeBase()
 end
 
 function Cell:removeBase()
-    self.status = "Not Occupied"
-    self.type = "Valid"
-    self.inhabitant = nil
-    base = nil
+    if (self.type == "Base") then
+        self.status = "Not Occupied"
+        self.type = "Valid"
+        self.inhabitant.cRep:toggleVisible()
+        self.inhabitant = nil
+        base = nil
+    end
 end
 
 function Cell:getType()

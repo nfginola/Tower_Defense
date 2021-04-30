@@ -60,6 +60,10 @@ function Camera:castRayForward()
     return target
 end
 
+function Camera:toggleActive()
+    self.cRep:toggleActive()
+end
+
 function Camera:move(dt)
     local playerPos = self:getPosition()
     local fwdVec = self:getForwardVec()

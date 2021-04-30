@@ -98,6 +98,20 @@ function Cell:removeBase()
     end
 end
 
+function getCellNumber(cellID)
+    local delim = ","
+    local cellNumbers = string.sub(cellID, 3, #cellID) .. ","
+    local elements = {}
+    for element in (cellNumbers):gmatch("([^" .. delim .. "]*)" .. delim) do 
+        table.insert(elements, element) 
+    end
+
+    local x = elements[1]
+    local z = elements[2]
+
+    return tonumber(x), tonumber(z)
+end
+
 function Cell:getType()
     return self.type
 end

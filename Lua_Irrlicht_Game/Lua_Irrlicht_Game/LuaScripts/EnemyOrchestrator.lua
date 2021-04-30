@@ -82,14 +82,13 @@ function EnemyOrchestrator:update(dt)
 end
 
 function getSmallerAndBigger(val1, val2)
-    local smaller = val1
-    local bigger = val2
     if (val2 < val1) then
-        smaller = val2
-        bigger = val1
+        val1, val2 = val2, val1
     end
-    return smaller, bigger
+
+    return val1, val2
 end
+
 
 function EnemyOrchestrator:addWaypoint(cell)
     if (self.waypointsConfirmed == true) then error("Waypoints already confirmed..") end
@@ -98,11 +97,14 @@ function EnemyOrchestrator:addWaypoint(cell)
         print("You can't select the same waypoint as the immediate previous one!")
     elseif (#self.waypoints ~= 0) and (self.waypointsConfirmed == false) then
         -- do checks to make sure waypoint connection is never diagonal
-        local newX = tonumber(string.sub(cell, 3, 3))
-        local newZ = tonumber(string.sub(cell, 5, 5))
 
-        local prevX = tonumber(string.sub(self.waypoints[#self.waypoints], 3, 3))
-        local prevZ = tonumber(string.sub(self.waypoints[#self.waypoints], 5, 5))
+        local newX, newZ = getCellNumber(cell)
+        local prevX, prevZ = getCellNumber(self.waypoints[#self.waypoints])
+
+        -- print(cell)
+        -- print("\n")
+        -- print(string.format("Prev X: %i || Prev Z: %i", prevX, prevZ))
+        -- print(string.format("New X: %i || New Z: %i", newX, newZ))
 
         local changeInX = (newX ~= prevX)
         local changeInZ = (newZ ~= prevZ)
@@ -110,15 +112,14 @@ function EnemyOrchestrator:addWaypoint(cell)
         -- Diagonal waypoint detected --> Dont insert
         if (changeInX) and (changeInZ) then
             print("Diagonal waypoint not allowed. Try again")
-            -- print(string.format("Prev X: %i || Prev Z: %i", prevX, prevZ))
-            -- print(string.format("New X: %i || New Z: %i", newX, newZ))
+
         else
             --print("Waypoint set from " .. self.waypoints[#self.waypoints] .. " to " .. cell)
             table.insert(self.waypoints, cell)
 
+            -- Affect the cells between waypoints!
             if (changeInX) then
-                --print("X!")
-
+                -- print("X!")
                 -- or oldZ, doesnt matter
                 local zval = newZ 
                 local smaller, bigger = getSmallerAndBigger(newX, prevX)
@@ -130,8 +131,7 @@ function EnemyOrchestrator:addWaypoint(cell)
                 end
                 
             elseif (changeInZ) then
-                --print("Z!")
-
+                -- print("Z!")
                 -- add the affected cells by waypoint
                 local xval = newX 
                 local smaller, bigger = getSmallerAndBigger(newZ, prevZ)
@@ -226,7 +226,7 @@ function EnemyOrchestrator:confirmWaypoints()
             end
         
 
-            cells[cellID]:removeTower()
+            --cells[cellID]:removeTower()
         end
 
     end

@@ -39,7 +39,7 @@ function Base:takeDamage(damage)
 end
 
 function Base:getCellID()
-    return string.sub(self.id, 1, 5)
+    return string.sub(self.id, 1, #self.id - 2)
 end
 
 return Base

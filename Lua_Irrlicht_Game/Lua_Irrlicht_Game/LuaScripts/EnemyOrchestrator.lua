@@ -1,6 +1,12 @@
 local EnemyOrchestrator = {}
 
+function getSmallerAndBigger(val1, val2)
+    if (val2 < val1) then
+        val1, val2 = val2, val1
+    end
 
+    return val1, val2
+end
 
 function EnemyOrchestrator:new()
     o = {
@@ -79,14 +85,6 @@ function EnemyOrchestrator:update(dt)
 
     ]]
 
-end
-
-function getSmallerAndBigger(val1, val2)
-    if (val2 < val1) then
-        val1, val2 = val2, val1
-    end
-
-    return val1, val2
 end
 
 function EnemyOrchestrator:addWaypoint(cell)
@@ -208,10 +206,6 @@ function EnemyOrchestrator:confirmWaypoints()
         print("Waypoints confirmed! :)")
         self.waypointsConfirmed = true
         self.showWaypoints = false
-
-        --[[
-            do some writing into a global object that is to be written into a file once ALL edit has been submitted!
-        ]]
 
         for key, cellID in pairs(self.cellsAffected) do
             if (cells[cellID]:getType() ~= "Base") and (cellID ~= self.spawnCell) then

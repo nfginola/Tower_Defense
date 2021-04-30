@@ -144,8 +144,12 @@ function edit_mode(dt)
             -- for k, v in pairs(invalids) do
             --     print(k, ": ", v)
             -- end
-
-
+        elseif (isKeyPressed("R")) then
+            for k, cellID in pairs(invalids) do
+                cells[cellID]:setCellType("Valid")
+                cells[cellID].cRep:setTexture("resources/textures/sand.jpg")
+            end
+            invalids = {}
         end
     end
 end

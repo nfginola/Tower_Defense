@@ -25,7 +25,8 @@ function EnemyWave:spawnEnemy()
         )
         enemies[newEnemy.id] = newEnemy
     else
-        print("No spawn point set for enemies!")
+        --print("No spawn point set for enemies!")
+        log("No spawn point set for enemies!")
     end
 end
 

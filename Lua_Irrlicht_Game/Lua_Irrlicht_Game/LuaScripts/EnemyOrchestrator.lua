@@ -134,10 +134,11 @@ end
 -- ============
 
 function EnemyOrchestrator:addWaypoint(cell)
-    if (self.waypointsConfirmed == true) then error("Waypoints already confirmed..") end
+    if (self.waypointsConfirmed == true) then log("Waypoints already confirmed..") return end
 
     if (cell == self.waypoints[#self.waypoints]) then
-        print("You can't select the same waypoint as the immediate previous one!")
+        --print("You can't select the same waypoint as the immediate previous one!")
+        log("You can't select the same waypoint as the immediate previous one!")
     elseif (#self.waypoints ~= 0) and (self.waypointsConfirmed == false) then
         -- do checks to make sure waypoint connection is never diagonal
 
@@ -154,7 +155,8 @@ function EnemyOrchestrator:addWaypoint(cell)
 
         -- Diagonal waypoint detected --> Dont insert
         if (changeInX) and (changeInZ) then
-            print("Diagonal waypoint not allowed. Try again")
+            --print("Diagonal waypoint not allowed. Try again")
+            log("Diagonal waypoint not allowed. Try again")
 
         else
             --print("Waypoint set from " .. self.waypoints[#self.waypoints] .. " to " .. cell)
@@ -194,7 +196,8 @@ function EnemyOrchestrator:addWaypoint(cell)
 end
 
 function EnemyOrchestrator:resetWaypoints()
-    print("Waypoints reset")
+    --print("Waypoints reset")
+    log("Waypoints reset..")
     self.waypoints = {}
     self.showWaypoints = true
 
@@ -204,9 +207,10 @@ function EnemyOrchestrator:resetWaypoints()
     end
 
     -- Reset cell type
-    cells[self.spawnCell]:setCellType("Valid")
-
-    self.spawnCell = ""
+    if (cells[self.spawnCell] ~= nil) then
+        cells[self.spawnCell]:setCellType("Valid")
+        self.spawnCell = ""
+    end
 
     -- Reset affected cells
     for key, cellID in pairs(self.cellsAffected) do
@@ -228,12 +232,15 @@ end
 
 function EnemyOrchestrator:setSpawnCell(cellID)
     if (#self.waypoints >= 1) then
-        print("Can't set spawn cell. Reset waypoints first!")
+        --print("Can't set spawn cell. Reset waypoints first!")
+        log("Can't set spawn cell. Reset waypoints first!")
     elseif (cells[cellID]:getType() ~= "Base") and (cells[cellID]:getStatus() == "Not Occupied") then
         self.spawnCell = cellID
         table.insert(self.waypoints, cellID)
 
-        print("Spawn set at: " .. cellID)
+        --print("Spawn set at: " .. cellID)
+        log("Spawn set at: " .. cellID)
+        
         -- Set cell to spawn texture
         cells[self.spawnCell].cRep:setTexture("resources/textures/lava.jpg")
         cells[self.spawnCell]:setCellType("Waypoint") -- Make sure other tools cant change spawn cell..
@@ -243,9 +250,11 @@ end
 function EnemyOrchestrator:confirmWaypoints()
     -- check if end waypoint is same as cell that base lives on
     if (self.waypoints[#self.waypoints] ~= base:getCellID()) then
-        print("Waypoint is not connected to base! Please fix this")
+        --print("Waypoint is not connected to base! Please fix this")
+        log("Waypoint is not connected to base! Please fix this")
     else
-        print("Waypoints confirmed! :)")
+        --print("Waypoints confirmed! :)")
+        log("Waypoints confirmed! :)")
         self.waypointsConfirmed = true
         self.showWaypoints = false
 

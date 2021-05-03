@@ -1,18 +1,28 @@
 #include "Game.h"
 
-enum
+std::wstring s2ws(const std::string& s)
 {
-    ID_IsNotPickable = 0,
-    IDFlag_IsPickable = 1 << 0,
-    IDFlag_IsHighlightable = 1 << 1
-};
+    int len;
+    int stringlength = (int)s.length() + 1;
+
+    len = MultiByteToWideChar(CP_ACP, 0, s.c_str(), stringlength, 0, 0);
+    wchar_t* buf = new wchar_t[len];
+
+    MultiByteToWideChar(CP_ACP, 0, s.c_str(), stringlength, buf, len);
+    std::wstring r(buf);
+    delete[] buf;
+    return r;
+}
+
 
 namespace luaF
 {
+    static int s_GUI_idstart = 101;
     static ISceneManager* s_sMgr = nullptr;
     static EventReceiver* s_evRec = nullptr;
     static IVideoDriver* s_driver = nullptr;
     static ISceneCollisionManager* s_collMan = nullptr;
+    static IGUIEnvironment* s_guiEnv = nullptr;
 
     static lua_State* s_L = nullptr;
     // old
@@ -163,8 +173,8 @@ namespace luaF
         wo->mesh = s_sMgr->addCubeSceneNode();
         wo->mesh->setID(ID_IsNotPickable);
         wo->mesh->setMaterialFlag(video::EMF_LIGHTING, false);
-        wo->mesh->setMaterialTexture(0, s_driver->getTexture("resources/textures/moderntile.jpg"));
-        wo->mesh->setPosition(vector3df(10.5f, 0.f, 10.5f));      // Default cubes are 10 big
+        //wo->mesh->setMaterialTexture(0, s_driver->getTexture("resources/textures/moderntile.jpg"));
+        //wo->mesh->setPosition(vector3df(10.5f, 0.f, 10.5f));      // Default cubes are 10 big
         wo->mesh->setName(wo->name.c_str());
 
         return 0;
@@ -438,8 +448,6 @@ namespace luaF
         luaL_getmetatable(L, "mt_Camera");
         lua_setmetatable(L, -2);
 
-        //std::cout << "Camera allocated!\n";
-
         return 1;
     }
 
@@ -618,6 +626,250 @@ namespace luaF
 
         return 0;
     }
+
+    // GUI
+    int clearGUI(lua_State* L)
+    {
+        s_guiEnv->clear();
+        return 0;
+    }
+
+    int setGlobalGUIFont(lua_State* L)
+    {
+        std::string fontpath = lua_tostring(L, -1);
+        IGUISkin* skin = s_guiEnv->getSkin();
+        IGUIFont* font = s_guiEnv->getFont(s2ws(fontpath).c_str());
+        if (font)
+            skin->setFont(font);
+
+        return 0;
+    }
+    
+    // Text
+    int createText(lua_State* L)
+    {
+        float topLeftX = lua_tonumber(L, -6);
+        float topLeftY = lua_tonumber(L, -5);
+        float pixWidth = lua_tonumber(L, -4);
+        float pixHeight = lua_tonumber(L, -3);
+        std::string initText = lua_tostring(L, -2);
+        std::string fontpath = lua_tostring(L, -1);
+
+        GUIStaticText** txt = reinterpret_cast<GUIStaticText**>(lua_newuserdata(L, sizeof(GUIStaticText*)));
+        *txt = new GUIStaticText;
+        
+        (*txt)->ptr = s_guiEnv->addStaticText(s2ws(initText).c_str(), rect<s32>(
+            topLeftX, topLeftY, topLeftX + pixWidth, topLeftY + pixHeight));
+
+        IGUIFont* font = s_guiEnv->getFont(fontpath.c_str());
+        (*txt)->ptr->setOverrideFont(font);
+
+        luaL_getmetatable(L, "mt_GUIText");
+        lua_setmetatable(L, -2);
+
+        return 1;
+    }
+
+    int removeText(lua_State* L)
+    {
+        GUIStaticText* txt = checkObject<GUIStaticText>(L, 1, "mt_GUIText");
+
+        if (txt != nullptr)
+        {
+            txt->ptr->setVisible(false);
+            delete txt;     // let irrlicht take care of the underlying ptr (crash if we drop internal ptr here)
+        }
+
+        return 0;
+    }
+
+    int setText(lua_State* L)
+    {
+        std::string newText = lua_tostring(L, -1);
+
+        GUIStaticText* text = checkObject<GUIStaticText>(L, 1, "mt_GUIText");
+
+        text->ptr->setText(s2ws(newText).c_str());
+        return 0;
+    }
+
+    int setTextBGColor(lua_State* L)
+    {
+        float r = lua_tonumber(L, -4);
+        float g = lua_tonumber(L, -3);
+        float b = lua_tonumber(L, -2);
+        float a = lua_tonumber(L, -1);
+
+        GUIStaticText* text = checkObject<GUIStaticText>(L, 1, "mt_GUIText");
+
+        text->ptr->setBackgroundColor(SColor(a, r, g, b));
+        return 0;
+    }
+
+
+    int setTextColor(lua_State* L)
+    {
+        float r = lua_tonumber(L, -4);
+        float g = lua_tonumber(L, -3);
+        float b = lua_tonumber(L, -2);
+        float a = lua_tonumber(L, -1);
+
+        GUIStaticText* text = checkObject<GUIStaticText>(L, 1, "mt_GUIText");
+
+        text->ptr->setOverrideColor(SColor(a, r, g, b));
+        return 0;
+    }
+
+    // Button
+    int createButton(lua_State* L)
+    {
+        float topLeftX = lua_tonumber(L, -7);
+        float topLeftY = lua_tonumber(L, -6);
+        float pixWidth = lua_tonumber(L, -5);
+        float pixHeight = lua_tonumber(L, -4);
+
+        float internalID = lua_tonumber(L, -3);
+        int irrID = s_GUI_idstart + internalID;
+
+        std::string text = lua_tostring(L, -2);
+        std::string fontpath = lua_tostring(L, -1);
+
+        GUIButton** button = reinterpret_cast<GUIButton**>(lua_newuserdata(L, sizeof(GUIButton*)));
+        *button = new GUIButton;
+
+        (*button)->ptr = s_guiEnv->addButton(rect<s32>(topLeftX, topLeftY, topLeftX + pixWidth, topLeftY + pixHeight), 
+            0, irrID, s2ws(text).c_str());
+
+        IGUIFont* font = s_guiEnv->getFont(fontpath.c_str());
+        (*button)->ptr->setOverrideFont(font);
+
+        luaL_getmetatable(L, "mt_GUIButton");
+        lua_setmetatable(L, -2);
+
+        return 1;
+    }
+
+    int removeButton(lua_State* L)
+    {
+        GUIButton* button = checkObject<GUIButton>(L, 1, "mt_GUIText");
+
+        if (button != nullptr)
+        {
+            button->ptr->setVisible(false);
+            delete button;     // let irrlicht take care of the underlying ptr (crash if we drop internal ptr here)
+        }
+
+        return 0;
+    }
+
+    int openFileDialog(lua_State* L)
+    {
+        float internalID = lua_tonumber(L, -1);
+        int irrID = s_GUI_idstart + internalID;
+
+        s_guiEnv->addFileOpenDialog(L"Please choose a file.", true, 0, irrID, true);
+        return 0;
+    }
+
+    // Scrollbar
+    int createScrollbar(lua_State* L)
+    {
+        float topLeftX = lua_tonumber(L, -7);
+        float topLeftY = lua_tonumber(L, -6);
+        float pixWidth = lua_tonumber(L, -5);
+        float pixHeight = lua_tonumber(L, -4);
+
+        float min = lua_tonumber(L, -3);
+        float max = lua_tonumber(L, -2);
+
+        float internalID = lua_tonumber(L, -1);
+        int irrID = s_GUI_idstart + internalID;
+
+
+        GUIScrollbar** sb = reinterpret_cast<GUIScrollbar**>(lua_newuserdata(L, sizeof(GUIScrollbar*)));
+        *sb = new GUIScrollbar;
+
+        (*sb)->ptr = s_guiEnv->addScrollBar(true,
+            rect<s32>(topLeftX, topLeftY, topLeftX + pixWidth, topLeftY + pixHeight), 0, irrID);
+
+        (*sb)->ptr->setPos(0);
+        (*sb)->ptr->setMin(min);
+        (*sb)->ptr->setMax(max);
+
+        luaL_getmetatable(L, "mt_GUIScrollbar");
+        lua_setmetatable(L, -2);
+
+
+        return 1;
+    }
+
+    int removeScrollbar(lua_State* L)
+    {
+        GUIButton* sb = checkObject<GUIButton>(L, 1, "mt_GUIScrollbar");
+
+        if (sb != nullptr)
+        {
+            sb->ptr->setVisible(false);
+            delete sb;     // let irrlicht take care of the underlying ptr (crash if we drop internal ptr here)
+        }
+
+        return 0;
+    }
+
+    // Listbox
+    int createListbox(lua_State* L)
+    {
+        float topLeftX = lua_tonumber(L, -5);
+        float topLeftY = lua_tonumber(L, -4);
+        float pixWidth = lua_tonumber(L, -3);
+        float pixHeight = lua_tonumber(L, -2);
+
+        float internalID = lua_tonumber(L, -1);
+        int irrID = s_GUI_idstart + internalID;
+
+        GUIListbox** lb = reinterpret_cast<GUIListbox**>(lua_newuserdata(L, sizeof(GUIListbox*)));
+        *lb = new GUIListbox;
+
+        (*lb)->ptr = s_guiEnv->addListBox(rect<s32>(topLeftX, topLeftY, topLeftX + pixWidth, topLeftY + pixHeight), 0, irrID, true);
+
+        luaL_getmetatable(L, "mt_GUIListbox");
+        lua_setmetatable(L, -2);
+
+        return 1;
+    }
+
+    int removeListbox(lua_State* L)
+    {
+        GUIListbox* lb = checkObject<GUIListbox>(L, 1, "mt_GUIListbox");
+
+        if (lb != nullptr)
+        {
+            lb->ptr->setVisible(false);
+            delete lb;     // let irrlicht take care of the underlying ptr (crash if we drop internal ptr here)
+        }
+
+        return 0;
+    }
+
+    int addToListbox(lua_State* L)
+    {
+        std::string text = lua_tostring(L, -1);
+
+        GUIListbox* lb = checkObject<GUIListbox>(L, 1, "mt_GUIListbox");
+
+        lb->ptr->addItem(s2ws(text).c_str());
+
+        return 0;
+    }
+
+    int resetListboxContent(lua_State* L)
+    {
+        GUIListbox* lb = checkObject<GUIListbox>(L, 1, "mt_GUIListbox");
+        lb->ptr->clear();
+
+        return 0;
+    }
+
 }
 
 vector3df LinInterpMover::Update(float dt, const std::string& id)
@@ -680,6 +932,123 @@ void LinInterpMover::AssignNextMove(const vector3df& start, const vector3df& end
     }
 }
 
+bool EventReceiver::OnEvent(const SEvent& event)
+{
+    if (event.EventType == irr::EET_KEY_INPUT_EVENT)
+    {
+        // held down
+        m_keyIsDown[event.KeyInput.Key] = event.KeyInput.PressedDown;
+
+        //// pressed and released
+        //if (event.KeyInput.PressedDown == false)
+        //{
+        //    m_keyWasPressed[event.KeyInput.Key] = true;
+        //}
+
+        // check first "down" (a.k.a pressed)
+        if (m_not_held)
+        {
+            m_not_held = false;
+            // transition from false to true
+            if (m_keyWasPressed[event.KeyInput.Key] == false)
+            {
+                m_keyWasPressed[event.KeyInput.Key] = true;
+            }
+        }
+
+        // allow above check again only if has been released
+        if (event.KeyInput.PressedDown == false)
+        {
+            m_not_held = true;
+            m_keyWasPressed[event.KeyInput.Key] = false;    // if released, we make sure to turn it off
+        }
+    }
+
+    if (event.EventType == irr::EET_MOUSE_INPUT_EVENT)
+    {
+        switch (event.MouseInput.Event)
+        {
+        case EMIE_LMOUSE_PRESSED_DOWN:
+            m_lmbPressed = true;
+            m_lmbDown = true;
+            break;
+        case EMIE_LMOUSE_LEFT_UP:
+            m_lmbPressed = false;
+            m_lmbDown = false;
+            break;
+        case EMIE_RMOUSE_PRESSED_DOWN:
+            m_rmbPressed = true;
+            m_rmbDown = true;
+            break;
+        case EMIE_RMOUSE_LEFT_UP:
+            m_rmbPressed = false;
+            m_rmbDown = false;
+            break;
+
+        default:
+            break;
+        }
+    }
+
+    if (event.EventType == irr::EET_GUI_EVENT)
+    {
+        s32 id = event.GUIEvent.Caller->getID();
+        int internalID = id - luaF::s_GUI_idstart;
+        s32 pos = 0;
+
+        switch (event.GUIEvent.EventType)
+        {
+        case EGET_SCROLL_BAR_CHANGED:
+            pos = ((IGUIScrollBar*)event.GUIEvent.Caller)->getPos();
+
+            // call lua with ID and new scrollbar value
+
+            lua_getglobal(luaF::s_L, "scrollbarEvent");
+            if (lua_isfunction(luaF::s_L, -1))
+            {
+                lua_pushnumber(luaF::s_L, internalID);
+                lua_pushnumber(luaF::s_L, pos);
+                luaF::pcall_p(luaF::s_L, 2, 0, 0);
+            }
+            break;
+
+        case EGET_BUTTON_CLICKED:
+            //// call lua with ID
+            //std::cout << id << " Button clicked!\n";
+
+            lua_getglobal(luaF::s_L, "buttonClickEvent");
+            if (lua_isfunction(luaF::s_L, -1))
+            {
+                lua_pushnumber(luaF::s_L, internalID);
+                luaF::pcall_p(luaF::s_L, 1, 0, 0);
+            }
+
+            break;
+
+        case EGET_FILE_SELECTED:
+
+            IGUIFileOpenDialog* fileDialog = (IGUIFileOpenDialog*)event.GUIEvent.Caller;
+
+            lua_getglobal(luaF::s_L, "fileSelected");
+            if (lua_isfunction(luaF::s_L, -1))
+            {
+                std::wstring wstr(fileDialog->getFileName());
+                std::string str(wstr.begin(), wstr.end());
+
+                std::cout << "Path: " << str << '\n';
+                lua_pushstring(luaF::s_L, str.c_str());
+                luaF::pcall_p(luaF::s_L, 1, 0, 0);
+            }
+            break;
+        }
+
+
+    }
+
+    return false;
+}
+
+
 
 Game::Game() : then(0)
 {
@@ -687,7 +1056,7 @@ Game::Game() : then(0)
     {
         m_dev = createDevice(
             video::EDT_OPENGL,
-            dimension2d<u32>(1280, 720),
+            dimension2d<u32>(1600, 900),
             32,
             false,
             false,
@@ -709,6 +1078,7 @@ Game::Game() : then(0)
         luaF::s_evRec = &m_evRec;
         luaF::s_driver = m_driver;
         luaF::s_collMan = m_collMan;
+        luaF::s_guiEnv = m_guiEnv;
     }
     
     // Init lua state
@@ -792,6 +1162,90 @@ Game::Game() : then(0)
         lua_setglobal(L, "CCamera");
     }
 
+    // Register Button representation
+    {
+        luaL_newmetatable(L, "mt_GUIButton");
+
+        luaL_Reg funcRegs[] =
+        {
+        { "new", luaF::createButton },
+        { "__gc", luaF::removeButton },
+
+
+        { NULL, NULL }
+        };
+
+        luaL_setfuncs(L, funcRegs, 0);
+        lua_pushvalue(L, -1);
+
+        lua_setfield(L, -1, "__index");
+        lua_setglobal(L, "CButton");
+    }
+
+    // Register Static Text representation
+    {
+        luaL_newmetatable(L, "mt_GUIText");
+
+        luaL_Reg funcRegs[] =
+        {
+        { "new", luaF::createText },
+        { "__gc", luaF::removeText },
+        { "setText", luaF::setText },
+        { "setBGColor", luaF::setTextBGColor },
+        { "setColor", luaF::setTextColor },
+
+
+        { NULL, NULL }
+        };
+
+        luaL_setfuncs(L, funcRegs, 0);
+        lua_pushvalue(L, -1);
+
+        lua_setfield(L, -1, "__index");
+        lua_setglobal(L, "CText");
+    }
+
+    // Register Scrollbar representation
+    {
+        luaL_newmetatable(L, "mt_GUIScrollbar");
+
+        luaL_Reg funcRegs[] =
+        {
+        { "new", luaF::createScrollbar },
+        { "__gc", luaF::removeScrollbar },
+
+        { NULL, NULL }
+        };
+
+        luaL_setfuncs(L, funcRegs, 0);
+        lua_pushvalue(L, -1);
+
+        lua_setfield(L, -1, "__index");
+        lua_setglobal(L, "CScrollbar");
+    }
+
+    // Register ListBox representation
+    {
+        luaL_newmetatable(L, "mt_GUIListbox");
+
+        luaL_Reg funcRegs[] =
+        {
+        { "new", luaF::createListbox },
+        { "__gc", luaF::removeListbox },
+        { "addToList", luaF::addToListbox },
+        { "reset", luaF::resetListboxContent },
+
+        { NULL, NULL }
+        };
+
+        luaL_setfuncs(L, funcRegs, 0);
+        lua_pushvalue(L, -1);
+
+        lua_setfield(L, -1, "__index");
+        lua_setglobal(L, "CListbox");
+    }
+
+
     // Register input functions
     lua_register(L, "isLMBpressed", luaF::isLMBPressed);
     lua_register(L, "isRMBpressed", luaF::isRMBPressed);
@@ -799,6 +1253,9 @@ Game::Game() : then(0)
     lua_register(L, "isKeyPressed", luaF::isKeyPressed);
     lua_register(L, "setSkyboxTextures", luaF::setSkyboxTextures);
     lua_register(L, "posDrawLine", luaF::drawLine);
+    lua_register(L, "clearGUI", luaF::clearGUI);
+    lua_register(L, "openFileDialog", luaF::openFileDialog);
+    lua_register(L, "setGlobalGUIFont", luaF::setGlobalGUIFont);
    
     // Load scripts
     luaF::load_script(L, "main.lua");

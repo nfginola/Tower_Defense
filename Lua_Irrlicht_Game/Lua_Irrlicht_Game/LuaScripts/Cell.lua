@@ -41,20 +41,21 @@ function Cell:new(id, x, z)
 end
 
 function Cell:setCellType(type_in)
-    if (type(type_in) ~= "string") then error("Set Cell Type only accepts string!") end
+    if (type(type_in) ~= "string") then log("Set Cell Type only accepts string!") return end
     if (type_in ~= "Invalid") and 
         (type_in ~= "Base") and
         (type_in ~= "Valid") and
         (type_in ~= "Waypoint") then
-            error("Set Cell Type only accepts 'Invalid', 'Base', 'Valid', 'Waypoint'")
+            log("Set Cell Type only accepts 'Invalid', 'Base', 'Valid', 'Waypoint'")
+            return 
         end
 
     self.type = type_in
 end
 
 function Cell:placeTower()
-    if (self.type ~= "Valid") then error("Cell not valid! Cannot place tower!") end
-    if (self.status == "Occupied") then error("Cell occupied! Cannot place tower!") end
+    if (self.type ~= "Valid") then log("Cell not valid! Cannot place tower!") return end
+    if (self.status == "Occupied") then log("Cell occupied! Cannot place tower!") return end
 
     self.inhabitant = Tower:new(self.id, { damage = 10, shotsPerSec = 3, range = 25})
     self.status = "Occupied"
@@ -80,8 +81,8 @@ function Cell:removeTower()
 end
 
 function Cell:placeBase()
-    if (self.type ~= "Base") then error("Cell not 'Base'! Cannot place Base!") end
-    if (self.status == "Occupied") then error("Something has gone terribily wrong..") end
+    if (self.type ~= "Base") then log("Cell not 'Base'! Cannot place Base!") return end
+    if (self.status == "Occupied") then log("Something has gone terribily wrong..") return end
 
     self.status = "Occupied"
     self.inhabitant = Base:new(self.id, self:getPosition(), 100)

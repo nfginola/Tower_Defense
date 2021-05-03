@@ -14,72 +14,18 @@ using namespace video;
 using namespace io;
 using namespace gui;
 
+enum
+{
+    ID_IsNotPickable = 0,
+    IDFlag_IsPickable = 1 << 0,
+    IDFlag_IsHighlightable = 1 << 1
+};
+
+
 class EventReceiver : public IEventReceiver
 {
 public:
-    virtual bool OnEvent(const SEvent& event)
-    {
-        if (event.EventType == irr::EET_KEY_INPUT_EVENT)
-        {
-            // held down
-            m_keyIsDown[event.KeyInput.Key] = event.KeyInput.PressedDown;
-
-            //// pressed and released
-            //if (event.KeyInput.PressedDown == false)
-            //{
-            //    m_keyWasPressed[event.KeyInput.Key] = true;
-            //}
-
-            // check first "down" (a.k.a pressed)
-            if (m_not_held)
-            {
-                m_not_held = false; 
-                // transition from false to true
-                if (m_keyWasPressed[event.KeyInput.Key] == false)
-                {
-                    m_keyWasPressed[event.KeyInput.Key] = true;
-                }
-            }   
-
-            // allow above check again only if has been released
-            if (event.KeyInput.PressedDown == false)
-            {
-                m_not_held = true;
-                m_keyWasPressed[event.KeyInput.Key] = false;    // if released, we make sure to turn it off
-            }
-        }
-           
-
-        if (event.EventType == irr::EET_MOUSE_INPUT_EVENT)
-        {
-            switch (event.MouseInput.Event)
-            {
-            case EMIE_LMOUSE_PRESSED_DOWN:
-                m_lmbPressed = true;
-                m_lmbDown = true;
-                break;
-            case EMIE_LMOUSE_LEFT_UP:
-                m_lmbPressed = false;
-                m_lmbDown = false;
-                break;
-            case EMIE_RMOUSE_PRESSED_DOWN:
-                m_rmbPressed = true;
-                m_rmbDown = true;
-                break;
-            case EMIE_RMOUSE_LEFT_UP:
-                m_rmbPressed = false;
-                m_rmbDown = false;
-                break;
-
-            default:
-                break;
-            }
-        }
-
-
-
-        return false;
-    }
+    virtual bool OnEvent(const SEvent& event);
 
     // This is used to check whether a key is being held down
     virtual bool IsKeyDown(EKEY_CODE keyCode) const
@@ -267,6 +213,30 @@ struct Camera
     ICameraSceneNode* sceneCam = nullptr;
     bool active = true;
 };
+
+struct GUIStaticText
+{
+    IGUIStaticText* ptr = nullptr;
+};
+
+struct GUIButton
+{
+    IGUIButton* ptr = nullptr;
+};
+
+struct GUIScrollbar
+{
+    IGUIScrollBar* ptr = nullptr;
+};
+
+struct GUIListbox
+{
+    IGUIListBox* ptr = nullptr;
+};
+
+
+
+
 
 class Game
 {

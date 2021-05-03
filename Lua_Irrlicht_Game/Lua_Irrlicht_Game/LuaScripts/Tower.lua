@@ -8,10 +8,10 @@ local tower_ground_height = 10
 
 function Tower:new(cellID, towerStats)
 
-    if (type(towerStats) ~= "table") then error("Tower Stats must be a table!") end
-    if (towerStats.damage == nil) then error("Tower Stats must have a 'damage' attribute!") end
-    if (towerStats.shotsPerSec == nil) then error("Tower Stats must have a 'shotsPerSec' attribute!") end
-    if (towerStats.range == nil) then error("Tower Stats must have a 'range' attribute!") end
+    if (type(towerStats) ~= "table") then log("Tower Stats must be a table!") return end
+    if (towerStats.damage == nil) then log("Tower Stats must have a 'damage' attribute!") return end
+    if (towerStats.shotsPerSec == nil) then log("Tower Stats must have a 'shotsPerSec' attribute!") return end
+    if (towerStats.range == nil) then log("Tower Stats must have a 'range' attribute!") return end
 
     local t = 
     {

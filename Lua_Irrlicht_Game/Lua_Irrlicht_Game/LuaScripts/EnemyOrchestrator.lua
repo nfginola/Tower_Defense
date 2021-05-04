@@ -13,8 +13,10 @@ function EnemyOrchestrator:new()
         -- (wave interval, groups, etc.)
 
         waveSystemStarted = false,
-        lastWaveSpawned = false,
-        lastWaveSpawnedFully = false,
+
+        -- True..
+        lastWaveSpawned = true,
+        lastWaveSpawnedFully = true,
 
         waveSpawnerFunc = nil,
         waveSpawnerCoroutine = nil,
@@ -23,34 +25,14 @@ function EnemyOrchestrator:new()
         wavePauseTimer = 0,
 
         -- Below set by file
-        levelWavePauseTime = 2,
-        levelWaveAmount = 3,
+        levelWavePauseTime = 0,
+        levelWaveAmount = 0,
         levelWavesData = {}
 
     }
 
     self.__index = self
     setmetatable(o, self)
-
-    -- Temp wave config
-    table.insert(o.levelWavesData, { spawnInterval = 0.1, enemyCount = 10 })
-    table.insert(o.levelWavesData, { spawnInterval = 0.5, enemyCount = 5 })
-    table.insert(o.levelWavesData, { spawnInterval = 0.1, enemyCount = 3 })
-
-    -- Function for coroutine
-    o.waveSpawnerFunc = function ()
-        for i = 1, o.levelWaveAmount do
-            -- make waves
-            o.currentWave = EnemyWave:new(o.levelWavesData[i].spawnInterval, o.levelWavesData[i].enemyCount, o.spawnCell)
-            -- o.currentWave = EnemyWave:new(spawnInterval, enemyCount, o.spawnCell)
-            print("Spawned")
-            if (i < o.levelWaveAmount) then
-                coroutine.yield(false)  -- last wave spawned not true
-            else
-                coroutine.yield(true)   -- last wave spawned true
-            end
-        end
-    end
 
     return o
 end
@@ -81,6 +63,7 @@ function EnemyOrchestrator:update(dt)
         waveDone = self.currentWave:update(dt)
     end
 
+    -- A bit complex here because coroutine doesnt signify "death" until 'one-after' the last (since yield is at the end)
     -- Start the wave system
     if (self.waveSystemStarted) then
         -- If done --> Try to spawn new wave
@@ -118,13 +101,15 @@ function EnemyOrchestrator:resetWaveSystem()
 end
 
 function EnemyOrchestrator:startWaveSystem()
-    if (not self.waveSystemStarted) and (self.currentWave == nil) then
-        self:resetWaveSystem()
-        self.waveSpawnerCoroutine = coroutine.create(self.waveSpawnerFunc)
+    if (self.waveSpawnerFunc == nil) then log("Please submit a wave list before testing the wave!") return end
+    if (self.waypointsConfirmed == false) then log("Please put down waypoints for the enemies!") return end
+    if (self.waveSystemStarted) and (self.currentWave ~= nil) then log("Wait until the current wave system is done spawning..") return end
 
-        self.waveSystemStarted = true
-        coroutine.resume(self.waveSpawnerCoroutine)
-    end
+    self:resetWaveSystem()
+    self.waveSpawnerCoroutine = coroutine.create(self.waveSpawnerFunc)
+
+    self.waveSystemStarted = true
+    coroutine.resume(self.waveSpawnerCoroutine)
 end
 
 function EnemyOrchestrator:isDoneSpawning()
@@ -132,6 +117,31 @@ function EnemyOrchestrator:isDoneSpawning()
 end
 
 -- ============
+
+function EnemyOrchestrator:setWaveData(waveData)    
+    self.levelWaveAmount = #waveData
+    self.levelWavesData = {}
+    for i = 1, #waveData do
+        table.insert(self.levelWavesData, waveData[i])
+    end
+
+    -- replace waveSpawnerFunc to use
+    self.waveSpawnerFunc = function ()
+        for i = 1, self.levelWaveAmount do
+            self.currentWave = EnemyWave:new(self.levelWavesData[i].spawnInterval, self.levelWavesData[i].enemyPerWave, self.spawnCell)
+            if (i < self.levelWaveAmount) then
+                coroutine.yield(false)  -- last wave spawned not true
+            else
+                coroutine.yield(true)   -- last wave spawned true
+            end
+        end
+    end
+
+end
+
+function EnemyOrchestrator:setWavePauseTime(pauseTime)
+    self.levelWavePauseTime = pauseTime
+end
 
 function EnemyOrchestrator:addWaypoint(cell)
     if (self.waypointsConfirmed == true) then log("Waypoints already confirmed..") return end

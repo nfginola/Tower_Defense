@@ -4,33 +4,36 @@ Camera = require("LuaScripts/Camera")
 Cell = require("LuaScripts/Cell")
 Enemy = require("LuaScripts/Enemy")
 EnemyOrchestrator = require("LuaScripts/EnemyOrchestrator")
+LevelFileManager = require("LuaScripts/LevelFileManager")
+Editor = require("LuaScripts/Editor")
 
-
+worldGridSize = { x = 0, z = 0 }
 base = nil
 towers = {}
 cells = {}
 enemies = {}
+invalids = {}
 orchestrator = EnemyOrchestrator:new()
+
+-- GUI
+logText = CText:new(20, 20, 600, 300, "Error text", "Resources/Fonts/myfont.xml")
+
+-- Game state ("Menu", "Play" or "Edit")
+gameState = "Edit"
 
 -- Ray cast target
 castTargetName = nil
 
 -- Marked for deletion
-enemies_to_delete = {}
+enemiesToDelete = {}
 
 -- Create FPS cam
 cam = Camera:new()
 cam:createFPSCam()
 
--- BaseTool
--- WaypointTool
--- TowerTool
--- EnemyTool
--- ValidTool
-current_tool = ""
-
-invalids = {}
-
+-- We can call these two to clear Edit screen
+-- clearEditorGUI()
+-- Editor = nil
 
 function init()
     print("[LUA]: Init")
@@ -38,6 +41,9 @@ function init()
     io.write("Enter desired X and Z dimensions of the level:\n")
     xLen = io.read("*n")
     zLen = io.read("*n")
+
+    worldGridSize.x = xLen
+    worldGridSize.z = zLen
 
     -- Init skybox
     -- top, bottom, left, right, front, back
@@ -51,136 +57,40 @@ function init()
     )
     
     -- Init cells
-    for i = 1, xLen do
-        cells[i] = {}
-        for u = 1, zLen do
+    for i = 1,  worldGridSize.x do
+        for u = 1, worldGridSize.z do
             local id = string.format("cg%i,%i", i, u)
+            local c = Cell:new(id, i, u)
+            cells[id] = c
 
-            cells[id] = Cell:new(id, i, u)
             cells[id]:setCellType("Valid")      -- Make tower placeable
+            --cells[id].cRep:toggleVisible()
         end
     end
 
 
-    baseCellID = string.format("cg%i,%i", xLen, 1)
+    local baseCellID = string.format("cg%i,%i", xLen, 1)
     -- Place base
     cells[baseCellID]:setCellType("Base")
     cells[baseCellID]:placeBase()
 
 end
 
---[[
-
-    To-do:
-        Irrlicht TextBox! (To add EnemyWave elements on the fly)
-
-    --> Set up local table and insert Level variables and Wave configs
-    --> Click some confirm button
-    --> orchestrator:submitLevelConfig(tab)
-        --> overwrite existing coroute function (with the configs)
-        --> set level variables and wave coinfigs
-
-]]
-
-function edit_mode(dt)  
-    if (isKeyPressed("1")) then
-        current_tool = "BaseTool"
-        toolText:setText(current_tool)
-        --print("Current tool is: " .. current_tool)
-    elseif (isKeyPressed("2")) then
-        current_tool = "WaypointTool"
-        toolText:setText(current_tool)
-       -- print("Current tool is: " .. current_tool)
-    elseif (isKeyPressed("5")) then
-        current_tool = "ValidTool"
-        toolText:setText(current_tool)
-        --print("Current tool is: " .. current_tool)
-    end
-    
-    -- Enemy Spawn + Waypoint
-    if (current_tool == "WaypointTool") then
-        if (isKeyPressed("R")) then
-            orchestrator:resetWaypoints()
-        elseif (isLMBpressed()) then
-            orchestrator:addWaypoint(castTargetName)
-        end
-    end
-
-    -- Base tool
-    if (current_tool == "BaseTool") then
-        if (isRMBpressed()) then
-            -- Remove base
-            local wasBase = cells[castTargetName]:getType() == "Base"
-
-            cells[castTargetName]:removeBase()
-            
-            if (wasBase) then
-                orchestrator:resetWaypoints()   -- force reset waypoints if move base
-            end
-        elseif (isLMBpressed()) then
-            -- Place base
-            if (base == nil) and (cells[castTargetName]:getType() == "Valid") then
-                cells[castTargetName]:setCellType("Base")
-                cells[castTargetName]:placeBase()
-            elseif (cells[castTargetName]:getType() == "Invalid") then
-                --print("Cant place base here!")
-                log("Cant place base here!")
-            else
-                --print("Base already placed!")
-                log("Base already placed!")
-            end
-        end
-    end
-
-    -- Valid tool
-    if (current_tool == "ValidTool") then
-        if (isLMBpressed()) then
-            if (cells[castTargetName]:getType() == "Valid") then
-                cells[castTargetName]:setCellType("Invalid")
-                cells[castTargetName].cRep:setTexture("resources/textures/lavainvalid.jpg")
-                invalids[castTargetName] = castTargetName
-            end
-        elseif (isRMBpressed()) then
-            if (cells[castTargetName]:getType() == "Invalid") then
-                cells[castTargetName]:setCellType("Valid")
-                cells[castTargetName].cRep:setTexture("resources/textures/sand.jpg")
-                invalids[castTargetName] = nil
-            end
-        elseif (isKeyPressed("R")) then
-            for k, cellID in pairs(invalids) do
-                cells[cellID]:setCellType("Valid")
-                cells[cellID].cRep:setTexture("resources/textures/sand.jpg")
-            end
-            invalids = {}
-        end
-    end
-end
-
-function play_mode(dt)
-    if (isKeyPressed("3")) then
-        current_tool = "TowerTool"
-        toolText:setText(current_tool)
-        --print("Current tool is: " .. current_tool)
-    elseif (isKeyPressed("4")) then
-        current_tool = "EnemySpawnTool"
-        toolText:setText(current_tool)
-        --print("Current tool is: " .. current_tool)        
-    end
-
-    -- Create enemy
-    if (current_tool == "EnemySpawnTool") then
-        if (isLMBpressed()) then
-            orchestrator:startWaveSystem()
-        end
+function playMode(dt)
+    if (isKeyPressed("5")) then
+        currentTool = "TowerTool"
+        toolText:setText(currentTool)
+        --print("Current tool is: " .. currentTool)
+      
     end
 
     -- Place tower with CELL
-    if (current_tool == "TowerTool") and (isLMBpressed()) then
+    if (currentTool == "TowerTool") and (isLMBpressed()) then
         cells[castTargetName]:placeTower()
     end
 
     -- Delete with CELL
-    if (current_tool == "TowerTool") and (isRMBpressed()) then
+    if (currentTool == "TowerTool") and (isRMBpressed()) then
         cells[castTargetName]:removeTower()
     end
 
@@ -194,7 +104,7 @@ function play_mode(dt)
 
 end
 
-function update_game_objects(dt)
+function updateGameObjects(dt)
     -- Go over all enemies and towers and set states
     for k, enemy in pairs(enemies) do
         local enemyPos = enemy:getPosition()
@@ -226,7 +136,7 @@ function update_game_objects(dt)
 
         -- Mark to delete if enemy died
         if (enemy:isDead()) then
-            enemies_to_delete[k] = true
+            enemiesToDelete[k] = true
         end
     end
 
@@ -236,18 +146,18 @@ function update_game_objects(dt)
     end
 
     -- Remove the enemies marked for deletion
-    for k, delete in pairs(enemies_to_delete) do
+    for k, delete in pairs(enemiesToDelete) do
         enemies[k].cRep:removeNode()
         enemies[k] = nil
     end
-    enemies_to_delete = {}  -- Reset enemies marked for deletion
+    enemiesToDelete = {}  -- Reset enemies marked for deletion
 end
 
 canWin = true
-function update_game_state(dt)
+function updateGameState(dt)
 
     -- Check win state
-    if (orchestrator:isDoneSpawning()) and (get_table_length(enemies) == 0) and (not base:isDead()) then
+    if (orchestrator:isDoneSpawning()) and (getTableLength(enemies) == 0) and (not base:isDead()) then
         if (canWin) then
             --print("You've won the game!")
             -- Temporary "Won game"
@@ -259,7 +169,7 @@ function update_game_state(dt)
 
 end
 
-function update_gui_anims(dt)
+function updateLogTextAnim(dt)
     -- Timer for log transparency interpolation
     logTimer = logTimer + dt
     local fac = logTimer/maxLogTime -- [0, 1]
@@ -271,133 +181,72 @@ function update_gui_anims(dt)
     end
 end
 
+function updateGuiAnims(dt)
+    updateLogTextAnim(dt)
+end
+
 function update(dt) 
     -- Cast ray and get target cell name
     castTargetName = cam:castRayForward()
 
-    edit_mode(dt)
-    play_mode(dt)
+    if (gameState == "Edit") and (Editor ~= nil) then
+        Editor:run(dt)
+    elseif (gameState == "Play") then
+        playMode(dt)
+        updateGameState(dt)
+    elseif (gameState == "Main Menu") then
+        -- MainMenu:run(dt)
+    end
 
     orchestrator:update(dt)
 
     -- Move camera with default FPS cam settings
     cam:move(dt)
 
-    if (isKeyPressed("G")) then
-        cam:toggleActive()
-        current_tool = "None"
-        toolText:setText(current_tool)
-    end
-
-    update_game_objects(dt)
-    update_game_state(dt)
-    update_gui_anims(dt)
+    updateGameObjects(dt)
+    updateGuiAnims(dt)
 
 end
 
-
--- ======================== GUI
-
-setGlobalGUIFont("Resources/Fonts/smallerfont.xml")
-
--- clearGUI() requires all GUI elements to be nil! 
--- GUI TEST
-logText = CText:new(20, 20, 600, 300, "Error text", "Resources/Fonts/myfont.xml")
-
-toolText = CText:new(700, 20, 400, 70, "Tool", "Resources/Fonts/myfont.xml")
-
-
--- Level
-timeBetweenWavesText = CText:new(1510, 75, 30, 15, "0.0", "Resources/Fonts/smallerfont.xml")
-timeBetweenWavesText:setBGColor(255, 255, 255, 255)
-levelEditText = CText:new(1300, 35, 400, 60, "Wave Pause Time", "Resources/Fonts/myfont.xml")
-
--- Wave
-spawnIntervalText = CText:new(1510, 255, 30, 15, "0.0", "Resources/Fonts/smallerfont.xml")
-spawnIntervalText:setBGColor(255, 255, 255, 255)
-spawnIntervalEditText = CText:new(1310, 280, 300, 15, "Enemy Spawn Interval", "Resources/Fonts/smallerfont.xml")
-
-enemyPerWaveText = CText:new(1510, 225, 30, 15, "1.0", "Resources/Fonts/smallerfont.xml")
-enemyPerWaveText:setBGColor(255, 255, 255, 255)
-enemyPerWaveEditText = CText:new(1310, 200, 300, 15, "Enemy Per Wave", "Resources/Fonts/smallerfont.xml")
-
-
--- GUI that uses ID
-levelEditSubmitButton = CButton:new(1150, 75, 140, 60, 1, "SUBMIT!", "Resources/Fonts/myfont.xml")
-
-
-waveEditSubmitButton = CButton:new(1250, 540, 140, 60, 50, "SUBMIT!", "Resources/Fonts/myfont.xml")
-waveEditAddButton = CButton:new(1150, 225, 140, 60, 51, "ADD!", "Resources/Fonts/myfont.xml")
-waveEditResetButton = CButton:new(1411, 540, 140, 60, 52, "RESET!", "Resources/Fonts/myfont.xml")
-
--- Scroll bar
-levelWavePauseScrollbar = CScrollbar:new(
-    1300, 75, 200, 15, -- topLeft X/Y and width/height
-    0, 100,  -- min/max
-    3)     -- id
-
-enemyPerWaveScrollbar = CScrollbar:new(
-    1300, 225, 200, 15, -- topLeft X/Y and width/height
-    1, 50,  -- min/max
-    4)     -- id
-
-spawnIntervalScrollbar = CScrollbar:new(
-    1300, 255, 200, 15, -- topLeft X/Y and width/height
-    0, 20,  -- min/max
-    5)     -- id
-
--- List box
-wavesListbox = CListbox:new(
-    1225, 325, 325, 200,
-    6
-)
-
--- Open file test (for Edit mode and Start Game)
-fileButtonTest = CButton:new(800, 800, 160, 60, 1337, "OPEN FILE!", "Resources/Fonts/myfont.xml")
-
-
-currEnemyPerWave = 0
-currSpawnInterval = 0
-currTimeBetweenWaves = 0
-
--- Events from Irrlicht
+-- ===================== GUI Events
 function scrollbarEvent(guiID, value)
-    if (guiID == 3) then
-        currTimeBetweenWaves = value / 10
-        timeBetweenWavesText:setText(currTimeBetweenWaves)
-    elseif (guiID == 4) then
-        currEnemyPerWave = value
-        enemyPerWaveText:setText(currEnemyPerWave)
-    elseif (guiID == 5) then
-        currSpawnInterval = value / 10
-        spawnIntervalText:setText(currSpawnInterval)
+    if (gameState == "Edit") then
+        Editor:handleScrollbarEvent(guiID, value)
+    elseif (gameState == "Play") then
+        log("Handle scrollbar in Play mode..")
+    elseif (gameState == "Menu") then
+        log("Handle scrollbar in Menu mode..")
     end
 
 end
 
 function buttonClickEvent(guiID)
-    if (guiID == 1337) then
-        openFileDialog()
-    elseif (guiID == 1) then
-        -- Submit the levels wave pause time
-        log("The levels wave pause time now set to " .. currTimeBetweenWaves .. " seconds")  
-    elseif (guiID == 50) then
-        -- Submit list to Orchestrator
-        log("Waves have been submitted!")
+    if (gameState == "Edit") then
+        Editor:handleButtonClickEvent(guiID, value)
 
-    elseif (guiID == 51) then
-        -- Add to list
-        wavesListbox:addToList("Wave #0 --- En. Per W.: " .. currEnemyPerWave .. " --- " .. "Spawn Int.: " .. currSpawnInterval)
-    elseif (guiID == 52) then
-        wavesListbox:reset()
+        -- To test
+        if (guiID == 1337) then
+            openFileDialog()
+        end
+
+    elseif (gameState == "Play") then
+        log("Handle scrollbar in Play mode..")
+    elseif (gameState == "Menu") then
+        log("Handle scrollbar in Menu mode..")
+        if (guiID == 1337) then
+            openFileDialog()
+        end
+
     end
+
 end
     
+lastFilePathSelected = ""
 function fileSelected(path)
-    print("path: " .. path)
-
+    lastFilePathSelected = path
 end
 
+-- ====================== GUI Log
 maxLogTime = 2
 logTimer = maxLogTime + 1   -- keep it hidden in the beginning
 function log(text)
@@ -406,8 +255,26 @@ function log(text)
 end
 
 -- ======================= Helpers below
+function resetWorldState()
+    if (base ~= nil) then
+        base.cRep:toggleVisible()   -- immediate hide 
+    end
+    base = nil
+    
+    for k, v in pairs(cells) do
+        v.cRep:toggleVisible()
+    end
+    cells = {}
 
-function get_table_length(tab)
+    towers = {}
+    enemies = {}
+    invalids = {}
+    orchestrator = EnemyOrchestrator:new()
+    worldGridSize = { x = 0, z = 0 }
+end
+
+
+function getTableLength(tab)
     local count = 0
     for k, v in pairs(tab) do
         count = count + 1
@@ -421,4 +288,14 @@ function getSmallerAndBigger(val1, val2)
     end
 
     return val1, val2
+end
+
+function split(str, delim)
+    local toSplit = str .. delim    -- append delim at end
+    local elements = {}
+    for element in (toSplit):gmatch("([^" .. delim .. "]*)" .. delim) do 
+        table.insert(elements, element) 
+    end
+
+    return elements
 end

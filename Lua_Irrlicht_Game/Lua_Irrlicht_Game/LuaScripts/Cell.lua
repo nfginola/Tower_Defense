@@ -35,8 +35,6 @@ function Cell:new(id, x, z)
     c.cRep:addCasting()
     c.cRep:setPickable()
 
-    -- print(id)
-
     return c
 end
 

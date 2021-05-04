@@ -6,6 +6,7 @@ function Base:new(cellID, cellPosition, maxHealth)
     local b = 
     {
         id = nil,
+        cellID = nil,
         health = maxHealth
     }
 
@@ -16,6 +17,7 @@ function Base:new(cellID, cellPosition, maxHealth)
     self.__index = self
     setmetatable(b, self) 
 
+    b.cellID = cellID
     b.id = cellID .. "_b"
     b:initCRep(b.id)
     b.cRep:addCubeMesh()

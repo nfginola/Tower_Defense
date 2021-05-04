@@ -3,7 +3,9 @@ Vector = require("LuaScripts/Vector")
 local Camera = {
     cRep = nil,     -- c representation of camera
     pos = nil,
-    moveSpeed = 20
+    active = nil,
+    shouldRaycast = true,
+    moveSpeed = 30
 }
 
 function Camera:new(id) 
@@ -14,6 +16,7 @@ function Camera:new(id)
 
     wo.cRep = CCamera:new(id)
     wo.pos = Vector:new({ x = 0, y = 0, z = 0})
+    wo.active = true
 
     return wo
 end
@@ -55,12 +58,24 @@ function Camera:getUpVec()
     return vec
 end
 
+function Camera:pauseRaycast()
+    self.shouldRaycast = false
+end
+
+function Camera:resumeRaycast()
+    self.shouldRaycast = true
+end
+
 function Camera:castRayForward()
-    local target = self.cRep:castRayForward()
+    local target = nil
+    if (self.shouldRaycast) then
+        target = self.cRep:castRayForward()
+    end
     return target
 end
 
 function Camera:toggleActive()
+    self.active = not self.active
     self.cRep:toggleActive()
 end
 
@@ -70,19 +85,19 @@ function Camera:move(dt)
     local rightVec = self:getRightVec()
     local upVec = self:getUpVec()
 
-    if (isKeyDown("W")) then
+    if (isKeyDown("W")) and (self.active) then
         playerPos = playerPos + fwdVec * self.moveSpeed * dt
-    elseif (isKeyDown("S")) then
+    elseif (isKeyDown("S")) and (self.active) then
         playerPos = playerPos - fwdVec * self.moveSpeed * dt
     end
-    if (isKeyDown("A")) then
+    if (isKeyDown("A")) and (self.active) then
         playerPos = playerPos - rightVec * self.moveSpeed * dt
-    elseif (isKeyDown("D")) then
+    elseif (isKeyDown("D")) and (self.active) then
         playerPos = playerPos + rightVec * self.moveSpeed * dt
     end
-    if (isKeyDown("E")) then
+    if (isKeyDown("E")) and (self.active) then
         playerPos = playerPos + upVec * self.moveSpeed * dt
-    elseif (isKeyDown("LShift")) then
+    elseif (isKeyDown("LShift")) and (self.active) then
         playerPos = playerPos - upVec * self.moveSpeed * dt
     end
 

@@ -559,14 +559,13 @@ namespace luaF
         return 3;
     }
 
+    static ISceneNode* highlightedSceneNode = nullptr;
     int camCastRay(lua_State* L)
     {
         Camera* cam = checkObject<Camera>(L, 1, "mt_Camera");
 
         if (cam != nullptr)
         {
-            static ISceneNode* highlightedSceneNode = nullptr;
-
             if (highlightedSceneNode)
                 highlightedSceneNode->setDebugDataVisible(0);   // reset debug bb
 
@@ -581,6 +580,10 @@ namespace luaF
                 highlightedSceneNode = selectedSceneNode;
                 hitName = highlightedSceneNode->getName();
                 selectedSceneNode->setDebugDataVisible(irr::scene::EDS_BBOX);   // debug bb draw
+            }
+            else
+            {
+                highlightedSceneNode = nullptr;
             }
             
 
@@ -792,7 +795,7 @@ namespace luaF
         (*sb)->ptr = s_guiEnv->addScrollBar(true,
             rect<s32>(topLeftX, topLeftY, topLeftX + pixWidth, topLeftY + pixHeight), 0, irrID);
 
-        (*sb)->ptr->setPos(0);
+        (*sb)->ptr->setPos(min);
         (*sb)->ptr->setMin(min);
         (*sb)->ptr->setMax(max);
 
@@ -805,7 +808,7 @@ namespace luaF
 
     int removeScrollbar(lua_State* L)
     {
-        GUIButton* sb = checkObject<GUIButton>(L, 1, "mt_GUIScrollbar");
+        GUIScrollbar* sb = checkObject<GUIScrollbar>(L, 1, "mt_GUIScrollbar");
 
         if (sb != nullptr)
         {
@@ -866,6 +869,63 @@ namespace luaF
     {
         GUIListbox* lb = checkObject<GUIListbox>(L, 1, "mt_GUIListbox");
         lb->ptr->clear();
+
+        return 0;
+    }
+
+    // Editbox
+    int createEditbox(lua_State* L)  
+    {
+        float topLeftX = lua_tonumber(L, -4);
+        float topLeftY = lua_tonumber(L, -3);
+        float pixWidth = lua_tonumber(L, -2);
+        float pixHeight = lua_tonumber(L, -1);
+
+        GUIEditbox** eb = reinterpret_cast<GUIEditbox**>(lua_newuserdata(L, sizeof(GUIEditbox*)));
+        *eb = new GUIEditbox;
+
+        (*eb)->ptr = s_guiEnv->addEditBox(L"",
+            rect<s32>(topLeftX, topLeftY, topLeftX + pixWidth, topLeftY + pixHeight)
+        );
+
+        luaL_getmetatable(L, "mt_GUIEditbox");
+        lua_setmetatable(L, -2);
+
+        return 1;
+    }
+
+    int removeEditbox(lua_State* L)
+    {
+        GUIEditbox* eb = checkObject<GUIEditbox>(L, 1, "mt_GUIEditbox");
+
+        if (eb != nullptr)
+        {
+            eb->ptr->setVisible(false);
+            delete eb;     // let irrlicht take care of the underlying ptr (crash if we drop internal ptr here)
+        }
+
+        return 0;
+    }
+
+
+    int getTextEditbox(lua_State* L)
+    {
+        GUIListbox* lb = checkObject<GUIListbox>(L, 1, "mt_GUIEditbox");
+        std::wstring txt = lb->ptr->getText();
+
+        std::string ret = std::string(txt.begin(), txt.end());
+        
+        lua_pushstring(L, ret.c_str());
+
+        return 1;
+    }
+
+    int setTextEditbox(lua_State* L)
+    {
+        GUIListbox* lb = checkObject<GUIListbox>(L, 1, "mt_GUIEditbox");
+        std::string txt = lua_tostring(L, -1);
+
+        lb->ptr->setText(s2ws(txt).c_str());
 
         return 0;
     }
@@ -1224,7 +1284,7 @@ Game::Game() : then(0)
         lua_setglobal(L, "CScrollbar");
     }
 
-    // Register ListBox representation
+    // Register Listbox representation
     {
         luaL_newmetatable(L, "mt_GUIListbox");
 
@@ -1243,6 +1303,27 @@ Game::Game() : then(0)
 
         lua_setfield(L, -1, "__index");
         lua_setglobal(L, "CListbox");
+    }
+
+    // Register Editbox representation
+    {
+        luaL_newmetatable(L, "mt_GUIEditbox");
+
+        luaL_Reg funcRegs[] =
+        {
+        { "new", luaF::createEditbox },
+        { "__gc", luaF::removeEditbox },
+        { "getText", luaF::getTextEditbox },
+        { "setText", luaF::setTextEditbox },
+
+        { NULL, NULL }
+        };
+
+        luaL_setfuncs(L, funcRegs, 0);
+        lua_pushvalue(L, -1);
+
+        lua_setfield(L, -1, "__index");
+        lua_setglobal(L, "CEditbox");
     }
 
 

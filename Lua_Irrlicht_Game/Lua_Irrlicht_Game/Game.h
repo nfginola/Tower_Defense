@@ -234,6 +234,11 @@ struct GUIListbox
     IGUIListBox* ptr = nullptr;
 };
 
+struct GUIEditbox
+{
+    IGUIEditBox* ptr = nullptr;
+};
+
 
 
 

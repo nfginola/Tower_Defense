@@ -267,8 +267,8 @@ function Editor:handleButtonClickEvent(guiID)
     elseif (guiID == 1501) then
         if (lastFilePathSelected == "") then log("Please select a file..") return end
 
-        LevelFileManager:loadFromFile(lastFilePathSelected)
-        LevelFileManager:setWorldFromLoadedFile()
+        local statusGood = LevelFileManager:loadFromFile(lastFilePathSelected)
+        if (statusGood) then LevelFileManager:setWorldFromLoadedFile() end
     end
 
 end

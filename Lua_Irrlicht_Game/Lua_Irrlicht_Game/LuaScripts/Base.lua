@@ -25,7 +25,7 @@ function Base:new(cellID, cellPosition, maxHealth)
 
     b.cRep:setPosition(cellPosition.x, cellPosition.y + 10, cellPosition.z)
     b:setScale(0.7, 1.3, 0.9)
-    b.cRep:toggleBB()
+    --b.cRep:toggleBB()
 
     return b
 end

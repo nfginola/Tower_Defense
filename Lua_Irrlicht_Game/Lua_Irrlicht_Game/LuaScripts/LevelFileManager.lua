@@ -120,7 +120,7 @@ end
 function LevelFileManager:loadFromFile(filePath)
     -- We know we want ".level" extension, so lets check for that
     local extensionGuess = string.sub(filePath, #filePath - 5, #filePath)
-    if (extensionGuess~= ".level") then log("Please select a valid level file!") return end
+    if (extensionGuess~= ".level") then log("Please select a valid level file!") return false end
 
     local file = io.open(filePath, "r")
     io.input(file)
@@ -160,6 +160,8 @@ function LevelFileManager:loadFromFile(filePath)
     end
 
     io.close(file)
+
+    return true
 
     -- print("Grid size: ",  self.data.gridSize.x, ", ", self.data.gridSize.z)
     -- print("Base Cell ID: ", self.data.baseCellID)

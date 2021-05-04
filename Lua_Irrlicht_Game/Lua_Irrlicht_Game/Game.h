@@ -77,6 +77,8 @@ public:
 
         else if (key == "LShift") return IsKeyDown(KEY_LSHIFT);
 
+        else if (key == "ESC") return IsKeyDown(KEY_ESCAPE);
+
     }
 
     bool isKeyPressed(const std::string& key)
@@ -122,6 +124,8 @@ public:
         else if (key == "0") return keyPressedHelper(KEY_KEY_0);
 
         else if (key == "LShift") return keyPressedHelper(KEY_LSHIFT);
+
+        else if (key == "ESC") return keyPressedHelper(KEY_ESCAPE);
     }
 
     bool isLMBPressed()

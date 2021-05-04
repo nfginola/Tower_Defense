@@ -3,11 +3,11 @@ Vector = require("LuaScripts/Vector")
 local Camera = {
     cRep = nil,     -- c representation of camera
     pos = nil,
-    active = nil,
+    active = true,
 
-    shouldRaycast = true,
-    raycastPauseTimer = 0,
-    raycastPauseMaxTime = 1,
+    --shouldRaycast = true,
+    --raycastPauseTimer = 0,
+    --raycastPauseMaxTime = 1,
 
     moveSpeed = 30
 }
@@ -20,7 +20,6 @@ function Camera:new(id)
 
     wo.cRep = CCamera:new(id)
     wo.pos = Vector:new({ x = 0, y = 0, z = 0})
-    wo.active = true
 
     return wo
 end
@@ -62,37 +61,44 @@ function Camera:getUpVec()
     return vec
 end
 
-function Camera:pauseRaycast(time)
-    self.shouldRaycast = false
-    self.raycastPauseTimer = 0
-    self.raycastPauseMaxTime = time
-end
+-- function Camera:pauseRaycast(time)
+--     self.shouldRaycast = false
+--     self.raycastPauseTimer = 0
+--     self.raycastPauseMaxTime = time
+-- end
 
 
 function Camera:castRayForward()
-    local target = "bruh"
-    if (self.shouldRaycast) then
+    local target = ""
+    if (self.active) then
         target = self.cRep:castRayForward()
     end
+    --print("shouldRaycast?: ", self.shouldRaycast)
     return target
 end
 
 function Camera:toggleActive()
-    self.active = not self.active
+    self.active = (not self.active)
     self.cRep:toggleActive()
+
+    -- if (not self.active) then
+    --     self.shouldRaycast = not self.active
+    -- elseif (self.active) then
+    --     self.shouldRaycast = self.active
+    -- end
 end
 
-function Camera:handleRaycastTimer(dt)
-    if (not self.shouldRaycast) then
-        self.raycastPauseTimer = self.raycastPauseTimer + dt    
-        if (self.raycastPauseTimer > self.raycastPauseMaxTime) then
-            self.shouldRaycast = true
-        end
-    end
-end
+-- function Camera:handleRaycastTimer(dt)
+--     if (not self.shouldRaycast) then
+--         self.raycastPauseTimer = self.raycastPauseTimer + dt    
+--         if (self.raycastPauseTimer > self.raycastPauseMaxTime) then
+--             self.shouldRaycast = true
+--         end
+--     end
+-- end
 
 function Camera:move(dt)
-    self:handleRaycastTimer(dt)
+    --self:handleRaycastTimer(dt)
 
     local playerPos = self:getPosition()
     local fwdVec = self:getForwardVec()

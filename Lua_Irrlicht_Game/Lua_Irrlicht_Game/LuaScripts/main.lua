@@ -193,7 +193,6 @@ function update(dt)
     dtimer = dtimer + dt
     if (dtimer > 0.25) then
         print(castTargetName)
-        print(cam.shouldRaycast)
         dtimer = 0
     end
 
@@ -215,6 +214,10 @@ function update(dt)
     updateGameObjects(dt)
     updateGuiAnims(dt)
 
+    -- Exit app
+    if (isKeyPressed("ESC")) then
+        exitApp()
+    end
 end
 
 -- ===================== GUI Events

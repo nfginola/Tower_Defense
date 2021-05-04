@@ -267,9 +267,6 @@ function Editor:handleButtonClickEvent(guiID)
     elseif (guiID == 1501) then
         if (lastFilePathSelected == "") then log("Please select a file..") return end
 
-        -- pause raycast for a second to avoid irrlicht raycast conflict (make time for garbage collection)
-        cam:pauseRaycast(1)  
-
         LevelFileManager:loadFromFile(lastFilePathSelected)
         LevelFileManager:setWorldFromLoadedFile()
     end

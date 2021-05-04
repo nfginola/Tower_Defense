@@ -18,6 +18,7 @@ std::wstring s2ws(const std::string& s)
 namespace luaF
 {
     static int s_GUI_idstart = 101;
+    static IrrlichtDevice* s_dev = nullptr;
     static ISceneManager* s_sMgr = nullptr;
     static EventReceiver* s_evRec = nullptr;
     static IVideoDriver* s_driver = nullptr;
@@ -79,6 +80,14 @@ namespace luaF
         }
     }
 
+
+    int exitApp(lua_State* L)
+    {
+        s_dev->closeDevice();
+        return 0;
+    }
+
+
     // Check user data from stack
     template<typename T>
     T* checkObject(lua_State* L, int n, const std::string& metatable)
@@ -128,7 +137,7 @@ namespace luaF
         {
             if (wo->mesh != nullptr)
             {
-                wo->mesh->remove();
+                wo->mesh->removeAll();
                 wo->mesh = nullptr;
             }
             delete wo;
@@ -599,17 +608,8 @@ namespace luaF
 
         if (cam != nullptr)
         {
-            if (cam->active)
-            {
-                cam->active = false;
-                cam->sceneCam->setInputReceiverEnabled(cam->active);
-            }
-            else
-            {
-                cam->active = true;
-                cam->sceneCam->setInputReceiverEnabled(cam->active);
-            }
-
+            cam->active = !(cam->active);
+            cam->sceneCam->setInputReceiverEnabled(cam->active);
         }
         return 1;
     }
@@ -770,7 +770,7 @@ namespace luaF
         float internalID = lua_tonumber(L, -1);
         int irrID = s_GUI_idstart + internalID;
 
-        s_guiEnv->addFileOpenDialog(L"Please choose a file.", true, 0, irrID, true);
+        s_guiEnv->addFileOpenDialog(L"Please choose a file!", true, 0, irrID, true);
         return 0;
     }
 
@@ -1134,13 +1134,14 @@ Game::Game() : then(0)
         m_collMan = m_sMgr->getSceneCollisionManager();
 
         // Setup statics for Lua usage
+        luaF::s_dev = m_dev;
         luaF::s_sMgr = m_sMgr;
         luaF::s_evRec = &m_evRec;
         luaF::s_driver = m_driver;
         luaF::s_collMan = m_collMan;
         luaF::s_guiEnv = m_guiEnv;
     }
-    
+
     // Init lua state
     L = luaL_newstate();
     luaF::s_L = L;
@@ -1337,6 +1338,7 @@ Game::Game() : then(0)
     lua_register(L, "clearGUI", luaF::clearGUI);
     lua_register(L, "openFileDialog", luaF::openFileDialog);
     lua_register(L, "setGlobalGUIFont", luaF::setGlobalGUIFont);
+    lua_register(L, "exitApp", luaF::exitApp);
    
     // Load scripts
     luaF::load_script(L, "main.lua");
@@ -1364,13 +1366,15 @@ void Game::Run()
 		Update(dt);
 
         // Draw
-        m_sMgr->drawAll();
-        m_guiEnv->drawAll();
-        m_driver->endScene();
+        if (m_dev->run())
+        {
+            m_sMgr->drawAll();
+            m_guiEnv->drawAll();
+            m_driver->endScene();
 
-        std::wstring title = std::wstring(L"Tower Defense. FPS: ") + std::to_wstring(1.0 / dt);
-        m_dev->setWindowCaption(title.c_str());
-
+            std::wstring title = std::wstring(L"Tower Defense. FPS: ") + std::to_wstring(1.0 / dt);
+            m_dev->setWindowCaption(title.c_str());
+        }
 	}
 }
 

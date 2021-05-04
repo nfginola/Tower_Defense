@@ -252,7 +252,7 @@ function LevelFileManager:setWorldFromLoadedFile()
 
     -- Set invalids
     for k, v in pairs(self.data.invalids) do
-        invalids[castTargetName] = castTargetName
+        invalids[v] = v
         cells[v]:setCellType("Invalid")
         cells[v].cRep:setTexture("resources/textures/lavainvalid.jpg")
     end

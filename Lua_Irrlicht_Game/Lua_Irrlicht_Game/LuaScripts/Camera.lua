@@ -4,7 +4,11 @@ local Camera = {
     cRep = nil,     -- c representation of camera
     pos = nil,
     active = nil,
+
     shouldRaycast = true,
+    raycastPauseTimer = 0,
+    raycastPauseMaxTime = 1,
+
     moveSpeed = 30
 }
 
@@ -58,16 +62,15 @@ function Camera:getUpVec()
     return vec
 end
 
-function Camera:pauseRaycast()
+function Camera:pauseRaycast(time)
     self.shouldRaycast = false
+    self.raycastPauseTimer = 0
+    self.raycastPauseMaxTime = time
 end
 
-function Camera:resumeRaycast()
-    self.shouldRaycast = true
-end
 
 function Camera:castRayForward()
-    local target = nil
+    local target = "bruh"
     if (self.shouldRaycast) then
         target = self.cRep:castRayForward()
     end
@@ -79,7 +82,18 @@ function Camera:toggleActive()
     self.cRep:toggleActive()
 end
 
+function Camera:handleRaycastTimer(dt)
+    if (not self.shouldRaycast) then
+        self.raycastPauseTimer = self.raycastPauseTimer + dt    
+        if (self.raycastPauseTimer > self.raycastPauseMaxTime) then
+            self.shouldRaycast = true
+        end
+    end
+end
+
 function Camera:move(dt)
+    self:handleRaycastTimer(dt)
+
     local playerPos = self:getPosition()
     local fwdVec = self:getForwardVec()
     local rightVec = self:getRightVec()

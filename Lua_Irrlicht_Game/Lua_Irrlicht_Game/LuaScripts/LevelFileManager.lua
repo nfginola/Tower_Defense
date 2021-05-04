@@ -161,29 +161,29 @@ function LevelFileManager:loadFromFile(filePath)
 
     io.close(file)
 
-    print("Grid size: ",  self.data.gridSize.x, ", ", self.data.gridSize.z)
-    print("Base Cell ID: ", self.data.baseCellID)
-    print("Wave Pause Time: ", self.data.timeBetweenWaves)
-    print("\n")
+    -- print("Grid size: ",  self.data.gridSize.x, ", ", self.data.gridSize.z)
+    -- print("Base Cell ID: ", self.data.baseCellID)
+    -- print("Wave Pause Time: ", self.data.timeBetweenWaves)
+    -- print("\n")
 
-    print("waypoints")
-    for k, v in ipairs(self.data.waypoints) do
-        print(v)
-    end
-    print("\n")
+    -- print("waypoints")
+    -- for k, v in ipairs(self.data.waypoints) do
+    --     print(v)
+    -- end
+    -- print("\n")
 
-    print("invalids")
-    for k, v in ipairs(self.data.invalids) do
-        print(v)
-    end
-    print("\n")
+    -- print("invalids")
+    -- for k, v in ipairs(self.data.invalids) do
+    --     print(v)
+    -- end
+    -- print("\n")
 
-    print("Waves: ", #self.data.waveData)
-    print("waveData")
-    for k, v in ipairs(self.data.waveData) do
-        print(v.enemyPerWave, ", ", v.spawnInterval)
-    end
-    print("\n")
+    -- print("Waves: ", #self.data.waveData)
+    -- print("waveData")
+    -- for k, v in ipairs(self.data.waveData) do
+    --     print(v.enemyPerWave, ", ", v.spawnInterval)
+    -- end
+    -- print("\n")
 
 end
 
@@ -225,7 +225,6 @@ end
 function LevelFileManager:setWorldFromLoadedFile()
     print("world set from loaded file")
 
-    Camera:pauseRaycast()  -- pause raycast
     
     -- Reset all relevant world state
     resetWorldState()
@@ -281,7 +280,6 @@ function LevelFileManager:setWorldFromLoadedFile()
         end
     end
 
-    Camera:resumeRaycast()  -- resume raycast
 end
 
 

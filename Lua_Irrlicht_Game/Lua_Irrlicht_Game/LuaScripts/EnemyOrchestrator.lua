@@ -16,7 +16,7 @@ function EnemyOrchestrator:new()
 
         -- True..
         lastWaveSpawned = true,
-        lastWaveSpawnedFully = true,
+        waveSystemRunning = false,
 
         waveSpawnerFunc = nil,
         waveSpawnerCoroutine = nil,
@@ -89,13 +89,13 @@ function EnemyOrchestrator:update(dt)
     -- Last wave done spawning completely
     if (self.lastWaveSpawned) and (waveDone) then
         self.currentWave = nil
-        self.lastWaveSpawnedFully = true
+        self.waveSystemRunning = false
     end
 end
 
 function EnemyOrchestrator:resetWaveSystem()
     self.currentWave = nil
-    self.lastWaveSpawnedFully = false
+    self.waveSystemRunning = false
     self.lastWaveSpawned = false
     self.waveSystemStarted = false
 end
@@ -109,11 +109,12 @@ function EnemyOrchestrator:startWaveSystem()
     self.waveSpawnerCoroutine = coroutine.create(self.waveSpawnerFunc)
 
     self.waveSystemStarted = true
+    self.waveSystemRunning = true
     coroutine.resume(self.waveSpawnerCoroutine)
 end
 
-function EnemyOrchestrator:isDoneSpawning()
-    return self.lastWaveSpawnedFully
+function EnemyOrchestrator:isWaveSystemRunning()
+    return self.waveSystemRunning
 end
 
 -- ============

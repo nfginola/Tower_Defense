@@ -146,6 +146,10 @@ function Editor:run(dt)
             -- Remove base
             local wasBase = cells[castTargetName]:getType() == "Base"
 
+            for k, v in pairs(enemies) do
+                v.cRep:toggleVisible()
+            end
+            enemies = {}
             cells[castTargetName]:removeBase()
             
             if (wasBase) then
@@ -210,7 +214,7 @@ function Editor:resetWaves()
 end
 
 function Editor:submitWave()
-    if (not orchestrator:isDoneSpawning()) then log("Wait until the enemy is done spawning..") return end 
+    if (orchestrator:isWaveSystemRunning()) then log("Wait until the enemy is done spawning..") return end 
     if (#self.waveList == 0) then log("Can't submit empty wave list..") return end 
 
     Editor.waveListSubmitted = true
@@ -218,7 +222,7 @@ function Editor:submitWave()
 end
 
 function Editor:submitWavePauseTime()
-    if (not orchestrator:isDoneSpawning()) then log("Wait until the enemy is done spawning..") return end 
+    if (orchestrator:isWaveSystemRunning()) then log("Wait until the enemy is done spawning..") return end 
     orchestrator:setWavePauseTime(self.currTimeBetweenWaves)
 end
 
@@ -262,9 +266,12 @@ function Editor:handleButtonClickEvent(guiID)
     -- Editor load level
     elseif (guiID == 1501) then
         if (lastFilePathSelected == "") then log("Please select a file..") return end
+
+        -- pause raycast for a second to avoid irrlicht raycast conflict (make time for garbage collection)
+        cam:pauseRaycast(1)  
+
         LevelFileManager:loadFromFile(lastFilePathSelected)
         LevelFileManager:setWorldFromLoadedFile()
-
     end
 
 end

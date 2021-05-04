@@ -185,9 +185,18 @@ function updateGuiAnims(dt)
     updateLogTextAnim(dt)
 end
 
+dtimer = 0
 function update(dt) 
     -- Cast ray and get target cell name
     castTargetName = cam:castRayForward()
+
+    dtimer = dtimer + dt
+    if (dtimer > 0.25) then
+        print(castTargetName)
+        print(cam.shouldRaycast)
+        dtimer = 0
+    end
+
 
     if (gameState == "Edit") and (Editor ~= nil) then
         Editor:run(dt)
@@ -265,9 +274,13 @@ function resetWorldState()
         v.cRep:toggleVisible()
     end
     cells = {}
+    
+    for k, v in pairs(enemies) do
+        v.cRep:toggleVisible()
+    end
+    enemies = {}
 
     towers = {}
-    enemies = {}
     invalids = {}
     orchestrator = EnemyOrchestrator:new()
     worldGridSize = { x = 0, z = 0 }

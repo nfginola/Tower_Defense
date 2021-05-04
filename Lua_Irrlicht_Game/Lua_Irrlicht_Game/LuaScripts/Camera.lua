@@ -5,11 +5,7 @@ local Camera = {
     pos = nil,
     active = true,
 
-    --shouldRaycast = true,
-    --raycastPauseTimer = 0,
-    --raycastPauseMaxTime = 1,
-
-    moveSpeed = 30
+    moveSpeed = 45
 }
 
 function Camera:new(id) 
@@ -61,12 +57,6 @@ function Camera:getUpVec()
     return vec
 end
 
--- function Camera:pauseRaycast(time)
---     self.shouldRaycast = false
---     self.raycastPauseTimer = 0
---     self.raycastPauseMaxTime = time
--- end
-
 
 function Camera:castRayForward()
     local target = ""
@@ -81,21 +71,8 @@ function Camera:toggleActive()
     self.active = (not self.active)
     self.cRep:toggleActive()
 
-    -- if (not self.active) then
-    --     self.shouldRaycast = not self.active
-    -- elseif (self.active) then
-    --     self.shouldRaycast = self.active
-    -- end
 end
 
--- function Camera:handleRaycastTimer(dt)
---     if (not self.shouldRaycast) then
---         self.raycastPauseTimer = self.raycastPauseTimer + dt    
---         if (self.raycastPauseTimer > self.raycastPauseMaxTime) then
---             self.shouldRaycast = true
---         end
---     end
--- end
 
 function Camera:move(dt)
     --self:handleRaycastTimer(dt)
@@ -105,20 +82,28 @@ function Camera:move(dt)
     local rightVec = self:getRightVec()
     local upVec = self:getUpVec()
 
+    local totalDirVec = Vector:new()
+
+    -- Diagonal fix
     if (isKeyDown("W")) and (self.active) then
-        playerPos = playerPos + fwdVec * self.moveSpeed * dt
+        totalDirVec = totalDirVec + fwdVec
     elseif (isKeyDown("S")) and (self.active) then
-        playerPos = playerPos - fwdVec * self.moveSpeed * dt
+        totalDirVec = totalDirVec - fwdVec
     end
     if (isKeyDown("A")) and (self.active) then
-        playerPos = playerPos - rightVec * self.moveSpeed * dt
+        totalDirVec = totalDirVec - rightVec
     elseif (isKeyDown("D")) and (self.active) then
-        playerPos = playerPos + rightVec * self.moveSpeed * dt
+        totalDirVec = totalDirVec + rightVec
     end
     if (isKeyDown("E")) and (self.active) then
-        playerPos = playerPos + upVec * self.moveSpeed * dt
+        totalDirVec = totalDirVec + upVec
     elseif (isKeyDown("LShift")) and (self.active) then
-        playerPos = playerPos - upVec * self.moveSpeed * dt
+        totalDirVec = totalDirVec - upVec
+    end
+
+    if (totalDirVec:length() ~= 0) then
+        totalDirVec:normalize()
+        playerPos = playerPos + totalDirVec * self.moveSpeed * dt
     end
 
     self:setPosition(playerPos.x, playerPos.y, playerPos.z)

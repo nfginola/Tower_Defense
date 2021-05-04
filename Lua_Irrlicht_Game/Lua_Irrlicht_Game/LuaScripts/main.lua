@@ -190,11 +190,11 @@ function update(dt)
     -- Cast ray and get target cell name
     castTargetName = cam:castRayForward()
 
-    dtimer = dtimer + dt
-    if (dtimer > 0.25) then
-        print(castTargetName)
-        dtimer = 0
-    end
+    -- dtimer = dtimer + dt
+    -- if (dtimer > 0.25) then
+    --     print(castTargetName)
+    --     dtimer = 0
+    -- end
 
 
     if (gameState == "Edit") and (Editor ~= nil) then

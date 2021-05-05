@@ -103,7 +103,8 @@ end
 function EnemyOrchestrator:startWaveSystem()
     if (self.waveSpawnerFunc == nil) then log("Please submit a wave list before testing the wave!") return end
     if (self.waypointsConfirmed == false) then log("Please put down waypoints for the enemies!") return end
-    if (self.waveSystemStarted) and (self.currentWave ~= nil) then log("Wait until the current wave system is done spawning..") return end
+    if (self.waveSystemRunning) and (self.currentWave ~= nil) then log("Wait until the current wave system is done spawning..") return end
+
 
     self:resetWaveSystem()
     self.waveSpawnerCoroutine = coroutine.create(self.waveSpawnerFunc)

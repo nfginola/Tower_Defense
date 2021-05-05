@@ -261,6 +261,7 @@ function LevelFileManager:setWorldFromLoadedFile()
 
     -- Two routes: Either push to Editor or push directly for Play mode
 
+
     if (gameState == "Edit") then
         Editor.currTimeBetweenWaves = self.data.timeBetweenWaves
         Editor.timeBetweenWavesText:setText(tostring(Editor.currTimeBetweenWaves))

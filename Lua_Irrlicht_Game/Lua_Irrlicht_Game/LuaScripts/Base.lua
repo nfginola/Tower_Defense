@@ -34,9 +34,14 @@ function Base:isDead()
     return self.health <= 0
 end
 
+function Base:getHP()
+    return self.health
+end
+
 function Base:takeDamage(damage)
     if (type(damage) ~= "number") then error("takeDamage can only take number argument!") end
     self.health = self.health - damage
+    if (self.health < 0) then self.health = 0 end
     -- print("Base HP left: " .. self.health)
 end
 

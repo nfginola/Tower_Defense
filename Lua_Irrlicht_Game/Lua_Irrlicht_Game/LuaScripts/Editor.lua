@@ -1,5 +1,4 @@
 -- ============== GUI
-setGlobalGUIFont("Resources/Fonts/smallerfont.xml")
 
 local Editor = {}
 
@@ -27,8 +26,6 @@ Editor.currSpawnInterval = 0.1
 -- ================================================== EDITOR GUI
 -- clearGUI() requires all GUI elements to be nil! 
 -- GUI TEST
-
-toolText = CText:new(700, 20, 400, 70, "Tool", "Resources/Fonts/myfont.xml")
 
 -- Level
 Editor.timeBetweenWavesText = CText:new(1510, 75, 30, 15, tostring(Editor.currTimeBetweenWaves), "Resources/Fonts/smallerfont.xml")
@@ -91,6 +88,25 @@ Editor.selectFileButton = CButton:new(1320, 860, 160, 30, 1337, "SELECT FILE", "
 function clearEditor()
     Editor = nil
     clearGUI()
+end
+
+function Editor:start(xGridSet, zGridSet)
+    worldGridSize.x = xGridSet
+    worldGridSize.z = zGridSet
+
+    
+    -- Init cells
+    for i = 1, worldGridSize.x do
+        for u = 1, worldGridSize.z do
+            local id = string.format("cg%i,%i", i, u)
+            local c = Cell:new(id, i, u)
+            cells[id] = c
+
+            cells[id]:setCellType("Valid")      -- Make tower placeable
+            --cells[id].cRep:toggleVisible()
+        end
+    end
+
 end
 
 function Editor:run(dt)
@@ -269,6 +285,10 @@ function Editor:handleButtonClickEvent(guiID)
 
         local statusGood = LevelFileManager:loadFromFile(lastFilePathSelected)
         if (statusGood) then LevelFileManager:setWorldFromLoadedFile() end
+
+    -- Select file
+    elseif (guiID == 1337) then
+        openFileDialog()
     end
 
 end

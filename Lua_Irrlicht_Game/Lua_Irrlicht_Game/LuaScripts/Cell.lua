@@ -52,13 +52,14 @@ function Cell:setCellType(type_in)
 end
 
 function Cell:placeTower()
-    if (self.type ~= "Valid") then log("Cell not valid! Cannot place tower!") return end
-    if (self.status == "Occupied") then log("Cell occupied! Cannot place tower!") return end
+    if (self.type ~= "Valid") then log("Cell not valid! Cannot place tower!") return false end
+    if (self.status == "Occupied") then log("Cell occupied! Cannot place tower!") return false end
 
     self.inhabitant = Tower:new(self.id, { damage = 10, shotsPerSec = 3, range = 25})
     self.status = "Occupied"
 
     towers[self.inhabitant.id] = self.inhabitant
+    return true
 end
 
 function Cell:removeTower()
@@ -73,8 +74,10 @@ function Cell:removeTower()
         towers[self.inhabitant.id] = nil
         self.inhabitant = nil
         self.status = "Not Occupied"
-    --else
-    --    print("No tower to delete")
+        return true
+    else
+        --log("No tower to delete here!")
+        return false
     end
 end
 

@@ -82,6 +82,10 @@ function lengthBetween(o1, o2)
     return (o1:getPosition() - o2:getPosition()):length()
 end
 
+function lengthBetweensq(o1, o2)
+    return (o1:getPosition() - o2:getPosition()):lengthsq()
+end
+
 
 
 return WorldObject

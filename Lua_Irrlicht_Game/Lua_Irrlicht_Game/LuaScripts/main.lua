@@ -5,7 +5,12 @@ Cell = require("LuaScripts/Cell")
 Enemy = require("LuaScripts/Enemy")
 EnemyOrchestrator = require("LuaScripts/EnemyOrchestrator")
 LevelFileManager = require("LuaScripts/LevelFileManager")
-Editor = require("LuaScripts/Editor")
+MainMenu = require("LuaScripts/MainMenu")
+Game = require("LuaScripts/Game")
+
+Editor = nil
+
+setGlobalGUIFont("Resources/Fonts/smallerfont.xml")
 
 worldGridSize = { x = 0, z = 0 }
 base = nil
@@ -17,9 +22,11 @@ orchestrator = EnemyOrchestrator:new()
 
 -- GUI
 logText = CText:new(20, 20, 600, 300, "Error text", "Resources/Fonts/myfont.xml")
+toolText = nil
+
 
 -- Game state ("Menu", "Play" or "Edit")
-gameState = "Edit"
+gameState = "Menu"
 
 -- Ray cast target
 castTargetName = nil
@@ -27,23 +34,31 @@ castTargetName = nil
 -- Marked for deletion
 enemiesToDelete = {}
 
--- Create FPS cam
-cam = Camera:new()
-cam:createFPSCam()
+cam = nil
 
--- We can call these two to clear Edit screen
--- clearEditorGUI()
--- Editor = nil
+function startGame()
+    cam = Camera:new()
+    cam:createFPSCam()
+
+    toolText = CText:new(700, 20, 400, 70, "Tool", "Resources/Fonts/myfont.xml")
+
+    Game:start()
+
+end
+
+function startEditor(xGridSet, zGridSet)
+    Editor = require("LuaScripts/Editor")
+
+    toolText = CText:new(700, 20, 400, 70, "Tool", "Resources/Fonts/myfont.xml")
+
+    cam = Camera:new()
+    cam:createFPSCam()
+
+    Editor:start(xGridSet, zGridSet)
+end
 
 function init()
     print("[LUA]: Init")
-
-    io.write("Enter desired X and Z dimensions of the level:\n")
-    xLen = io.read("*n")
-    zLen = io.read("*n")
-
-    worldGridSize.x = xLen
-    worldGridSize.z = zLen
 
     -- Init skybox
     -- top, bottom, left, right, front, back
@@ -55,52 +70,6 @@ function init()
         "resources/textures/skybox/pz.png",
         "resources/textures/skybox/nz.png"
     )
-    
-    -- Init cells
-    for i = 1,  worldGridSize.x do
-        for u = 1, worldGridSize.z do
-            local id = string.format("cg%i,%i", i, u)
-            local c = Cell:new(id, i, u)
-            cells[id] = c
-
-            cells[id]:setCellType("Valid")      -- Make tower placeable
-            --cells[id].cRep:toggleVisible()
-        end
-    end
-
-
-    local baseCellID = string.format("cg%i,%i", xLen, 1)
-    -- Place base
-    cells[baseCellID]:setCellType("Base")
-    cells[baseCellID]:placeBase()
-
-end
-
-function playMode(dt)
-    if (isKeyPressed("5")) then
-        currentTool = "TowerTool"
-        toolText:setText(currentTool)
-        --print("Current tool is: " .. currentTool)
-      
-    end
-
-    -- Place tower with CELL
-    if (currentTool == "TowerTool") and (isLMBpressed()) then
-        cells[castTargetName]:placeTower()
-    end
-
-    -- Delete with CELL
-    if (currentTool == "TowerTool") and (isRMBpressed()) then
-        cells[castTargetName]:removeTower()
-    end
-
-    -- Toggle tower range visible
-    if (isKeyPressed("H")) then
-        towerRangeHidden = not towerRangeHidden -- Modify global in Tower.lua to sync visibility
-        for k, tower in pairs(towers) do
-                tower:toggleRangeVisible()
-        end
-    end
 
 end
 
@@ -115,14 +84,20 @@ function updateGameObjects(dt)
         if (baseCollided) then
             -- Force enemy death when it collides with base
             enemy:kill()
-            base:takeDamage(enemy.damage)
+            if (gameState == "Play") then
+                base:takeDamage(enemy.damage)
+                Game:updateBaseHPText(base:getHP())
+            end
         end
 
         -- Check Enemy vs Tower
         for a, tower in pairs(towers) do
-            local lenTE = lengthBetween(enemy, tower)
 
-            if (lenTE <= tower:getMaxRange()) then
+            -- Naive range check
+            -- We compare squares to avoid having to do sqrts..
+            local lenTE = lengthBetweensq(enemy, tower)
+
+            if (lenTE <= tower:getMaxRange() * tower:getMaxRange()) then
                 tower:onEnemyEnter(enemy)
             else
                 tower:onEnemyLeave(enemy)
@@ -153,22 +128,6 @@ function updateGameObjects(dt)
     enemiesToDelete = {}  -- Reset enemies marked for deletion
 end
 
-canWin = true
-function updateGameState(dt)
-
-    -- Check win state
-    if (orchestrator:isDoneSpawning()) and (getTableLength(enemies) == 0) and (not base:isDead()) then
-        if (canWin) then
-            --print("You've won the game!")
-            -- Temporary "Won game"
-            log("You've won the game!")
-            canWin = false
-        end
-    end
-
-
-end
-
 function updateLogTextAnim(dt)
     -- Timer for log transparency interpolation
     logTimer = logTimer + dt
@@ -187,8 +146,12 @@ end
 
 dtimer = 0
 function update(dt) 
-    -- Cast ray and get target cell name
-    castTargetName = cam:castRayForward()
+    if (cam ~= nil) then
+        -- Cast ray and get target cell name
+        castTargetName = cam:castRayForward()
+        -- Move camera with default FPS cam settings
+        cam:move(dt)
+    end
 
     -- dtimer = dtimer + dt
     -- if (dtimer > 0.25) then
@@ -200,16 +163,12 @@ function update(dt)
     if (gameState == "Edit") and (Editor ~= nil) then
         Editor:run(dt)
     elseif (gameState == "Play") then
-        playMode(dt)
-        updateGameState(dt)
-    elseif (gameState == "Main Menu") then
-        -- MainMenu:run(dt)
+        Game:run(dt)
+    elseif (gameState == "Menu") then
+        MainMenu:run(dt)
     end
 
     orchestrator:update(dt)
-
-    -- Move camera with default FPS cam settings
-    cam:move(dt)
 
     updateGameObjects(dt)
     updateGuiAnims(dt)
@@ -227,28 +186,18 @@ function scrollbarEvent(guiID, value)
     elseif (gameState == "Play") then
         log("Handle scrollbar in Play mode..")
     elseif (gameState == "Menu") then
-        log("Handle scrollbar in Menu mode..")
+        MainMenu:handleScrollbarEvent(guiID, value)
     end
 
 end
 
 function buttonClickEvent(guiID)
     if (gameState == "Edit") then
-        Editor:handleButtonClickEvent(guiID, value)
-
-        -- To test
-        if (guiID == 1337) then
-            openFileDialog()
-        end
-
+        Editor:handleButtonClickEvent(guiID)
     elseif (gameState == "Play") then
         log("Handle scrollbar in Play mode..")
     elseif (gameState == "Menu") then
-        log("Handle scrollbar in Menu mode..")
-        if (guiID == 1337) then
-            openFileDialog()
-        end
-
+        MainMenu:handleButtonClickEvent(guiID)
     end
 
 end
@@ -259,6 +208,8 @@ function fileSelected(path)
 end
 
 -- ====================== GUI Log
+
+-- Log text that disappears over time.. :)
 maxLogTime = 2
 logTimer = maxLogTime + 1   -- keep it hidden in the beginning
 function log(text)
@@ -288,7 +239,6 @@ function resetWorldState()
     orchestrator = EnemyOrchestrator:new()
     worldGridSize = { x = 0, z = 0 }
 end
-
 
 function getTableLength(tab)
     local count = 0

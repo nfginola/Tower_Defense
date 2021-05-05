@@ -76,8 +76,12 @@ function Vector:length()
     return math.sqrt(self.x * self.x + self.y * self.y + self.z * self.z)
 end
 
+function Vector:lengthsq()
+    return self.x * self.x + self.y * self.y + self.z * self.z
+end
+
 function Vector:normalize()
-    if (self:length() == 0) then error("Trying to normalize a vector with length 0!") end
+    if (self:length() == 0) then return end
     len = self:length()
     self.x = self.x / len
     self.y = self.y / len

@@ -131,6 +131,7 @@ function EnemyOrchestrator:setWaveData(waveData)
         for i = 1, self.levelWaveAmount do
             self.currentWave = EnemyWave:new(self.levelWavesData[i].spawnInterval, self.levelWavesData[i].enemyPerWave, self.spawnCell)
             if (i < self.levelWaveAmount) then
+                -- just return???
                 coroutine.yield(false)  -- last wave spawned not true
             else
                 coroutine.yield(true)   -- last wave spawned true
@@ -180,10 +181,24 @@ function EnemyOrchestrator:addWaypoint(cell)
                 local zval = newZ 
                 local smaller, bigger = getSmallerAndBigger(newX, prevX)
 
+                local dir = (newX - prevX) / math.abs(newX - prevX)
+
                 -- add the affected cells by waypoint
+                local xIdx = prevX
                 for i = smaller, bigger do
-                    local affectedCellID = string.format("cg%i,%i", i, zval)
+
+                    local affectedCellID = string.format("cg%i,%i", xIdx, zval)
+                    
+                    -- handle wp going through base
+                    if (cells[affectedCellID]:getType() == "Base") then
+                        self.waypoints[#self.waypoints] = affectedCellID
+                        self:confirmWaypoints()
+                        return
+                    end
+
                     self.cellsAffected[affectedCellID] = affectedCellID -- duplicates just reassign themselves
+
+                    xIdx = xIdx + dir
                 end
                 
             elseif (changeInZ) then
@@ -192,9 +207,21 @@ function EnemyOrchestrator:addWaypoint(cell)
                 local xval = newX 
                 local smaller, bigger = getSmallerAndBigger(newZ, prevZ)
 
+                local dir = (newZ - prevZ) / math.abs(newZ - prevZ)
+
+                local zIdx = prevZ
                 for i = smaller, bigger do
-                    local affectedCellID = string.format("cg%i,%i", xval, i)
+                    local affectedCellID = string.format("cg%i,%i", xval, zIdx)
+
+                    -- handle wp going through base
+                    if (cells[affectedCellID]:getType() == "Base") then
+                       self.waypoints[#self.waypoints] = affectedCellID
+                       self:confirmWaypoints()
+                       return
+                    end
+
                     self.cellsAffected[affectedCellID] = affectedCellID -- duplicates just reassign themselves
+                    zIdx = zIdx + dir
                 end
             end
             

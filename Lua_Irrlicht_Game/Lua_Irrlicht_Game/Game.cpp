@@ -475,10 +475,15 @@ namespace luaF
     {
         Camera* cam = checkObject<Camera>(L, 1, "mt_Camera");
 
+        float x = lua_tonumber(L, -3);
+        float y = lua_tonumber(L, -2);
+        float z = lua_tonumber(L, -1);
+
+
         if (cam != nullptr)
         {
             cam->sceneCam = s_sMgr->addCameraSceneNodeFPS();
-            cam->sceneCam->setPosition({ 20, 5, -5 });
+            cam->sceneCam->setPosition({ x, y, z });
             cam->sceneCam->setID(ID_IsNotPickable);
         }
 
@@ -754,7 +759,7 @@ namespace luaF
 
     int removeButton(lua_State* L)
     {
-        GUIButton* button = checkObject<GUIButton>(L, 1, "mt_GUIText");
+        GUIButton* button = checkObject<GUIButton>(L, 1, "mt_GUIButton");
 
         if (button != nullptr)
         {
@@ -1326,7 +1331,6 @@ Game::Game() : then(0)
         lua_setfield(L, -1, "__index");
         lua_setglobal(L, "CEditbox");
     }
-
 
     // Register input functions
     lua_register(L, "isLMBpressed", luaF::isLMBPressed);

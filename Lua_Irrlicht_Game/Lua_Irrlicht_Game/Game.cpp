@@ -91,6 +91,7 @@ namespace luaF
     template<typename T>
     T* checkObject(lua_State* L, int n, const std::string& metatable)
     {
+        // A ptr is held in the Lua environment!
         void* ptr = luaL_testudata(L, n, metatable.c_str());
         T* obj = nullptr;
         if (ptr != nullptr)
@@ -104,6 +105,7 @@ namespace luaF
         std::string name = lua_tostring(L, -1);
         if (name != "")
         {
+            // A ptr is held in the Lua environment.
             WorldObject** wo = reinterpret_cast<WorldObject**>(lua_newuserdata(L, sizeof(WorldObject*)));
             *wo = new WorldObject;
             (*wo)->name = name;

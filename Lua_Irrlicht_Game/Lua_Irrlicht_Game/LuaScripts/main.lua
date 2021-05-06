@@ -53,7 +53,9 @@ end
 function startEditor(xGridSet, zGridSet)
     Editor = require("LuaScripts/Editor")
 
-    toolText = CText:new(700, 20, 400, 70, "Tool", "Resources/Fonts/myfont.xml")
+    local startTool = "BaseTool"
+    toolText = CText:new(700, 20, 400, 70, startTool, "Resources/Fonts/myfont.xml")
+    currentTool = startTool
 
     cam = Camera:new()
     cam:createFPSCam()

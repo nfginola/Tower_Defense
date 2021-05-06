@@ -109,7 +109,8 @@ namespace luaF
             (*wo)->name = name;
 
             luaL_getmetatable(L, "mt_WorldObject");
-            lua_setmetatable(L, -2);
+            lua_setmetatable(L, -2);    // pops table from stack and sets it as new metatb for the idx value! 
+                                        // mt_WorldObject is at top and we set it on userdata below it
 
         }
         else

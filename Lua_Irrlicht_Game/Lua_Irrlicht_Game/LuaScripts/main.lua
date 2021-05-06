@@ -37,13 +37,17 @@ enemiesToDelete = {}
 cam = nil
 
 function startGame()
+    local statusGood = Game:start()
+    if (not statusGood) then return statusGood end
+
     cam = Camera:new()
     cam:createFPSCam()
 
-    toolText = CText:new(700, 20, 400, 70, "Tool", "Resources/Fonts/myfont.xml")
+    -- toolText = CText:new(700, 20, 400, 70, "Tool", "Resources/Fonts/myfont.xml")
+    currentTool = "TowerTool"
+    -- toolText:setText(currentTool)
 
-    Game:start()
-
+    return statusGood
 end
 
 function startEditor(xGridSet, zGridSet)
@@ -162,7 +166,7 @@ function update(dt)
 
     if (gameState == "Edit") and (Editor ~= nil) then
         Editor:run(dt)
-    elseif (gameState == "Play") then
+    elseif (gameState == "Play" and Game:isReady()) then
         Game:run(dt)
     elseif (gameState == "Menu") then
         MainMenu:run(dt)
@@ -173,9 +177,10 @@ function update(dt)
     updateGameObjects(dt)
     updateGuiAnims(dt)
 
-    -- Exit app
+    -- Go to main menu app
     if (isKeyPressed("ESC")) then
-        exitApp()
+        resetLuaState()
+        return 
     end
 end
 

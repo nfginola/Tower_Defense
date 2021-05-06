@@ -8,6 +8,7 @@ LevelFileManager.data.baseCellID = ""
 LevelFileManager.data.invalids = {}
 LevelFileManager.data.waypoints = {}
 LevelFileManager.data.timeBetweenWaves = -1
+LevelFileManager.data.money = -1
 
 -- Element: { enemyPerWave, spawnInterval }
 LevelFileManager.data.waveData = {}
@@ -22,6 +23,9 @@ function LevelFileManager:saveCurrentState()
     self.data.waypoints = {}
     
     self.data.baseCellID = base.cellID    
+
+    -- set money
+    self.data.money = Editor.currMoney
 
     -- set invalids
     for k, v in pairs(invalids) do
@@ -87,6 +91,7 @@ function LevelFileManager:saveToFile()
     io.write("gs=", worldGridSize.x, ",", worldGridSize.z, "\n")
     io.write("bp=", base.cellID, "\n")
     io.write("lvlwpi=", self.data.timeBetweenWaves, "\n")
+    io.write("money=", self.data.money, "\n")
 
     io.write("wypS\n")
     for k, v in pairs(self.data.waypoints) do
@@ -120,21 +125,22 @@ end
 function LevelFileManager:loadFromFile(filePath)
     -- We know we want ".level" extension, so lets check for that
     local extensionGuess = string.sub(filePath, #filePath - 5, #filePath)
-    if (extensionGuess~= ".level") then log("Please select a valid level file!") return false end
+    if (extensionGuess ~= ".level") then log("Please select a valid level file!") return false end
 
     local file = io.open(filePath, "r")
     io.input(file)
 
-    -- First three always (Gridsize, Base cell ID and Level wave pause time)
     local gs = io.read()
     local bID = io.read()
     local lwpTime = io.read()
+    local lvlMoney = io.read()
 
     local gsTab = split(split(gs, "=")[2], ",")
     self.data.gridSize.x = gsTab[1]
     self.data.gridSize.z = gsTab[2]
     self.data.baseCellID = split(bID, "=")[2]
-    self.data.timeBetweenWaves = tonumber(split(lwpTime, "=")[2])   
+    self.data.timeBetweenWaves = tonumber(split(lwpTime, "=")[2])
+    self.data.money = tonumber(split(lvlMoney, "=")[2])
     
     -- Read the rest (info that can have arbitrary length)
     -- Waypoints (wyp), Invalid grids (inv), Wave Data (wave)
@@ -260,14 +266,12 @@ function LevelFileManager:setWorldFromLoadedFile()
 
 
     -- Two routes: Either push to Editor or push directly for Play mode
-
-
     if (gameState == "Edit") then
-        Editor.currTimeBetweenWaves = self.data.timeBetweenWaves
-        Editor.timeBetweenWavesText:setText(tostring(Editor.currTimeBetweenWaves))
-        Editor:submitWavePauseTime()
+        Editor:initPartialLevel(self.data.timeBetweenWaves, self.data.money)
+        Editor:submitPartialLevel()
     elseif (gameState == "Play") then
         orchestrator:setWavePauseTime(self.data.timeBetweenWaves)
+        Game:initMoney(self.data.money)
     end
 
     if (gameState == "Edit") then

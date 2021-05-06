@@ -37,7 +37,6 @@ namespace luaF
      }*/
 
 
-
     bool check_lua(lua_State* L, int r)
     {
         if (r != LUA_OK) {
@@ -457,6 +456,8 @@ namespace luaF
         luaL_getmetatable(L, "mt_Camera");
         lua_setmetatable(L, -2);
 
+        std::cout << "Hola!\n";
+
         return 1;
     }
 
@@ -573,15 +574,15 @@ namespace luaF
         return 3;
     }
 
-    static ISceneNode* highlightedSceneNode = nullptr;
+    static ISceneNode* s_highlightedSceneNode = nullptr;
     int camCastRay(lua_State* L)
     {
         Camera* cam = checkObject<Camera>(L, 1, "mt_Camera");
 
         if (cam != nullptr)
         {
-            if (highlightedSceneNode)
-                highlightedSceneNode->setDebugDataVisible(0);   // reset debug bb
+            if (s_highlightedSceneNode)
+                s_highlightedSceneNode->setDebugDataVisible(0);   // reset debug bb
 
             // get fwd
             const matrix4& mat = cam->sceneCam->getViewMatrix();
@@ -591,13 +592,13 @@ namespace luaF
             ISceneNode* selectedSceneNode = irrlichtCastRay(cam->sceneCam->getAbsolutePosition(), forwardVec);
             if (selectedSceneNode)
             {
-                highlightedSceneNode = selectedSceneNode;
-                hitName = highlightedSceneNode->getName();
+                s_highlightedSceneNode = selectedSceneNode;
+                hitName = s_highlightedSceneNode->getName();
                 selectedSceneNode->setDebugDataVisible(irr::scene::EDS_BBOX);   // debug bb draw
             }
             else
             {
-                highlightedSceneNode = nullptr;
+                s_highlightedSceneNode = nullptr;
             }
             
 
@@ -1114,7 +1115,6 @@ bool EventReceiver::OnEvent(const SEvent& event)
 }
 
 
-
 Game::Game() : then(0)
 {
     // Init Irrlicht
@@ -1147,6 +1147,89 @@ Game::Game() : then(0)
         luaF::s_guiEnv = m_guiEnv;
     }
 
+    // Init Lua
+    ResetLuaState();
+}
+
+Game::~Game()
+{
+    m_dev->drop();
+}
+
+void Game::Run()
+{
+	Init();
+
+
+	while (m_dev->run())
+	{
+        // Get delta time
+        const u32 now = m_dev->getTimer()->getTime();
+        const f32 dt = (f32)(now - then) / 1000.f;  // in sec
+        then = now;
+
+        m_driver->beginScene(true, true, SColor(255, 100, 101, 140));
+
+		Update(dt);
+
+        // Draw
+        if (m_dev->run())
+        {
+            m_sMgr->drawAll();
+            m_guiEnv->drawAll();
+            m_driver->endScene();
+
+            std::wstring title = std::wstring(L"Tower Defense. FPS: ") + std::to_wstring(1.0 / dt);
+            m_dev->setWindowCaption(title.c_str());
+        }
+	}
+}
+
+void Game::Init()
+{
+    // Get time now
+    then = m_dev->getTimer()->getTime();
+}
+
+void Game::Update(float dt)
+{
+    // Lua main update
+    if (L != nullptr && luaF::s_L != nullptr)
+    {
+        lua_getglobal(L, "update");
+        if (lua_isfunction(L, -1))
+        {
+            lua_pushnumber(L, dt);
+            luaF::pcall_p(L, 1, 0, 0);
+        }
+    }
+
+    if (m_luaShouldReset)
+    {
+        ResetLuaState();
+        m_luaShouldReset = false;
+    }
+
+    /*
+    * 1) --> when quitting --> set flag (to reset lua state)
+    * 2) --> after update loop ends
+    * 3) --> actually handle replacement
+    * 
+    
+    */
+}
+
+void Game::ResetLuaState()
+{
+    if (L != nullptr && luaF::s_L != nullptr)
+    {
+        lua_close(L);
+        L = nullptr;
+        luaF::s_L = nullptr;
+        m_sMgr->clear();
+        m_guiEnv->clear();
+    }
+
     // Init lua state
     L = luaL_newstate();
     luaF::s_L = L;
@@ -1169,7 +1252,7 @@ Game::Game() : then(0)
         { "addCasting", luaF::woAddTriSelector },
 
         { "setPosition", luaF::woSetPosition },
-        { "setScale", luaF::woSetScale }, 
+        { "setScale", luaF::woSetScale },
         { "setTexture", luaF::woSetTexture },
         { "setPickable", luaF::woSetPickable },
         { "setTransparent", luaF::woSetTransparent  },
@@ -1186,7 +1269,7 @@ Game::Game() : then(0)
         { "update", luaF::woUpdate  },
 
 
-        
+
 
         { NULL, NULL }
         };
@@ -1332,7 +1415,7 @@ Game::Game() : then(0)
         lua_setglobal(L, "CEditbox");
     }
 
-    // Register input functions
+    // Register misc global functions
     lua_register(L, "isLMBpressed", luaF::isLMBPressed);
     lua_register(L, "isRMBpressed", luaF::isRMBPressed);
     lua_register(L, "isKeyDown", luaF::isKeyDown);
@@ -1343,63 +1426,28 @@ Game::Game() : then(0)
     lua_register(L, "openFileDialog", luaF::openFileDialog);
     lua_register(L, "setGlobalGUIFont", luaF::setGlobalGUIFont);
     lua_register(L, "exitApp", luaF::exitApp);
-   
+
+    // Use Closure to access internal Game state through global lua func
+    lua_pushlightuserdata(L, this);
+    lua_pushcclosure(L, &Game::ResetLuaStateWrapper, 1);
+    lua_setglobal(L, "resetLuaState");
+
     // Load scripts
     luaF::load_script(L, "main.lua");
-}
 
-Game::~Game()
-{
-    m_dev->drop();
-}
-
-void Game::Run()
-{
-	Init();
-
-
-	while (m_dev->run())
-	{
-        // Get delta time
-        const u32 now = m_dev->getTimer()->getTime();
-        const f32 dt = (f32)(now - then) / 1000.f;  // in sec
-        then = now;
-
-        m_driver->beginScene(true, true, SColor(255, 100, 101, 140));
-
-		Update(dt);
-
-        // Draw
-        if (m_dev->run())
-        {
-            m_sMgr->drawAll();
-            m_guiEnv->drawAll();
-            m_driver->endScene();
-
-            std::wstring title = std::wstring(L"Tower Defense. FPS: ") + std::to_wstring(1.0 / dt);
-            m_dev->setWindowCaption(title.c_str());
-        }
-	}
-}
-
-void Game::Init()
-{
     // Init Lua
     lua_getglobal(L, "init");
     if (lua_isfunction(L, -1))
         luaF::pcall_p(L, 0, 0, 0);
-
-    // Get time now
-    then = m_dev->getTimer()->getTime();
 }
 
-void Game::Update(float dt)
+int Game::ResetLuaStateWrapper(lua_State* L)
 {
-    // Lua main update
-    lua_getglobal(L, "update");
-	if (lua_isfunction(L, -1)) 
-    {
-		lua_pushnumber(L, dt);
-        luaF::pcall_p(L, 1, 0, 0);
-	}
+    Game* gm = static_cast<Game*>(lua_touserdata(L, lua_upvalueindex(1)));
+
+    //gm->ResetLuaState();
+    gm->m_luaShouldReset = true;
+    luaF::s_highlightedSceneNode = nullptr;
+
+    return 0;
 }

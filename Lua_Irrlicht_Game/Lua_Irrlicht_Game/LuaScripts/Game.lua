@@ -1,9 +1,15 @@
 local Game = {}
 
+local currency = "Water Droplets"
 -- ============== GUI
 local winText = nil
 local baseHP = nil
 local moneyText = nil
+
+Game.helpText1 = nil
+Game.helpText2 = nil
+Game.quitText = nil
+Game.ready = false
 
 -- ============== Game start
 local gameStartTime = 10
@@ -23,21 +29,35 @@ local logGameQuitInterval = 1
 local canWin = true
 local gameStarted = false
 local won = false
-local money = 350
+local money = 0   -- Set by file
 local moneyPerSec = 4
 
 local placeTowerCost = 21
 local refundTowerGet = 15
 
 function Game:start()
-    currentTool = "TowerTool"
-    toolText:setText(currentTool)
-
     local statusGood = LevelFileManager:loadFromFile(lastFilePathSelected)
-    if (statusGood) then LevelFileManager:setWorldFromLoadedFile() end
+    if (not statusGood) then return statusGood end
+
+    LevelFileManager:setWorldFromLoadedFile() 
+
+    self.quitText = CText:new(1130, 20, 500, 30, "Press ESC: Go to Main Menu", "Resources/Fonts/myfont.xml")
+    self.helpText1 = CText:new(1130, 60, 500, 50, "Press H: Show/Hide Tower Range", "Resources/Fonts/myfont.xml")
+    self.helpText2 = CText:new(1130, 100, 500, 70, "Click LMB/RMB to Place/Remove Tower", "Resources/Fonts/myfont.xml")
 
     baseHP = CText:new(20, 200, 600, 50, "Base HP: " .. tostring(base:getHP()), "Resources/Fonts/myfont.xml")
-    moneyText = CText:new(20, 270, 600, 50, "Money: " .. tostring(money), "Resources/Fonts/myfont.xml")
+    moneyText = CText:new(20, 250, 600, 50, currency .. ": " .. tostring(money), "Resources/Fonts/myfont.xml")
+
+    self.ready = true
+    return statusGood
+end
+
+function Game:initMoney(curr)
+    money = curr
+end
+
+function Game:isReady()
+    return self.ready
 end
 
 function Game:updateBaseHPText(hp)
@@ -46,7 +66,7 @@ end
 
 function Game:setMoney(newMoney)
     money = newMoney
-    moneyText:setText("Money: " .. tostring(math.floor(money)))
+    moneyText:setText(currency .. ": " .. tostring(math.floor(money)))
 end
 
 function Game:handleControls(dt)
@@ -59,12 +79,12 @@ function Game:handleControls(dt)
 
     -- Place tower with CELL
     if (currentTool == "TowerTool") and (isLMBpressed()) then
-        if (money - placeTowerCost < 0) then log("Not enough money to place tower!") return end
+        if (money - placeTowerCost < 0) then log("Not enough " .. currency .. " to place tower!") return end
 
         local statusGood = cells[castTargetName]:placeTower()
         if (statusGood) then
             self:setMoney(money - placeTowerCost)
-            log("Bought tower for " .. tostring(placeTowerCost) .. " currency")
+            log("Bought tower for " .. tostring(placeTowerCost) .. " " .. currency)
         end
 
     end
@@ -73,7 +93,7 @@ function Game:handleControls(dt)
     if (currentTool == "TowerTool") and (isRMBpressed()) then
         local statusGood = cells[castTargetName]:removeTower()
         if (statusGood) then
-            log("Refunded tower for " .. tostring(refundTowerGet) .. " currency")
+            log("Refunded tower for " .. tostring(refundTowerGet) .. " " .. currency)
             self:setMoney(money + refundTowerGet)
         end
     end
@@ -125,15 +145,14 @@ function Game:countdownToExit(dt)
     logQuitTimer = logQuitTimer + dt
 
     if (logQuitTimer > logGameQuitInterval) then
-        log("Game quits in.. " .. tostring(math.ceil(gameQuitTime - quitTimer)))
+        log("Going back to main menu in.. " .. tostring(math.ceil(gameQuitTime - quitTimer)))
         logQuitTimer = 0
     end
 
     if (quitTimer > gameQuitTime) then
-        exitApp()
+        resetLuaState()
     end
 end
-
 
 function Game:run(dt)
     if (not gameStarted) then

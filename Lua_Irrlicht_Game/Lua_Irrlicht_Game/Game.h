@@ -258,9 +258,15 @@ public:
 private:
 	void Init();
 	void Update(float dt);
+    void ResetLuaState();
+    static int ResetLuaStateWrapper(lua_State* L);
   
 private:
+    bool m_luaShouldReset = false;
 	lua_State* L = nullptr;
+    
+    // For newly created state
+    lua_State* Ltmp = nullptr;
 
 	// Irrlicht managers
 	IrrlichtDevice* m_dev = nullptr;

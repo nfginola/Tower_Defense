@@ -21,6 +21,7 @@ Editor.waveListSubmitted = false
 Editor.currTimeBetweenWaves = 0.1
 Editor.currEnemyPerWave = 3
 Editor.currSpawnInterval = 0.1
+Editor.currMoney = 30
 
 
 -- ================================================== EDITOR GUI
@@ -28,9 +29,15 @@ Editor.currSpawnInterval = 0.1
 -- GUI TEST
 
 -- Level
-Editor.timeBetweenWavesText = CText:new(1510, 75, 30, 15, tostring(Editor.currTimeBetweenWaves), "Resources/Fonts/smallerfont.xml")
+Editor.timeBetweenWavesText = CText:new(1510, 100, 30, 15, tostring(Editor.currTimeBetweenWaves), "Resources/Fonts/smallerfont.xml")
 Editor.timeBetweenWavesText:setBGColor(255, 255, 255, 255)
-Editor.levelEditText = CText:new(1310, 100, 400, 60, "Wave Pause Time", "Resources/Fonts/smallerfont.xml")
+Editor.levelEditText = CText:new(1310, 75, 400, 60, "Wave Pause Time", "Resources/Fonts/smallerfont.xml")
+
+-- Money
+Editor.currMoneyText = CText:new(1510, 130, 50, 15, tostring(Editor.currMoney), "Resources/Fonts/smallerfont.xml")
+Editor.currMoneyText:setBGColor(255, 255, 255, 255)
+Editor.currMoneyTip = CText:new(1310, 155, 400, 60, "Starting Currency", "Resources/Fonts/smallerfont.xml")
+
 
 -- Wave
 Editor.spawnIntervalText = CText:new(1510, 255, 30, 15, tostring(Editor.currSpawnInterval), "Resources/Fonts/smallerfont.xml")
@@ -42,8 +49,8 @@ Editor.enemyPerWaveText:setBGColor(255, 255, 255, 255)
 Editor.enemyPerWaveEditText = CText:new(1310, 200, 300, 15, "Enemy Per Wave", "Resources/Fonts/smallerfont.xml")
 
 
--- GUI that uses ID
-levelEditSubmitButton = CButton:new(1150, 75, 140, 60, 1, "SUBMIT!", "Resources/Fonts/myfont.xml")
+
+levelEditSubmitButton = CButton:new(1150, 100, 140, 60, 1, "SUBMIT!", "Resources/Fonts/myfont.xml")
 
 Editor.waveEditSubmitButton = CButton:new(1250, 540, 140, 60, 50, "SUBMIT!", "Resources/Fonts/myfont.xml")
 Editor.waveEditAddButton = CButton:new(1150, 225, 140, 60, 51, "ADD!", "Resources/Fonts/myfont.xml")
@@ -52,7 +59,7 @@ Editor.waveEditResetButton = CButton:new(1411, 540, 140, 60, 52, "RESET!", "Reso
 
 -- Scroll bar
 Editor.levelWavePauseScrollbar = CScrollbar:new(
-    1300, 75, 200, 15, -- topLeft X/Y and width/height
+    1300, 100, 200, 15, -- topLeft X/Y and width/height
     Editor.currTimeBetweenWaves * 10, 100,  -- min/max/curr
     3)     -- id
 
@@ -66,11 +73,16 @@ Editor.spawnIntervalScrollbar = CScrollbar:new(
     Editor.currSpawnInterval * 10, 20,  -- min/max
     5)     -- id
 
+Editor.moneyIntervalScrollbar = CScrollbar:new(
+    1300, 130, 200, 15, -- topLeft X/Y and width/height
+    Editor.currMoney, 700,  -- min/max
+    999)     -- id
+
+
 -- List box
 Editor.waveListbox = CListbox:new(
     1225, 325, 325, 200,
-    6
-)
+    6)
 
 -- Save file button
 Editor.saveFileButton = CButton:new(1250, 700, 300, 70, 1500, "Save Level", "Resources/Fonts/myfont.xml")
@@ -82,6 +94,23 @@ Editor.saveFileEditboxTip = CText:new(1340, 620, 300, 40, "Save File Name", "Res
 Editor.loadFileButton = CButton:new(1250, 790, 300, 70, 1501, "Load Level", "Resources/Fonts/myfont.xml")
 Editor.selectFileButton = CButton:new(1320, 860, 160, 30, 1337, "SELECT FILE", "Resources/Fonts/smallerfont.xml")
 
+-- Controls Text
+
+Editor.helpText = CText:new(1100, 20, 600, 50, "Press H to Show/Hide Controls Help", "Resources/Fonts/myfont.xml")
+
+Editor.controlsHeadingText = nil
+Editor.controlsText = nil
+Editor.controlsText2 = nil
+Editor.controlsText3 = nil
+Editor.controlsText4 = nil
+Editor.controlsText5 = nil
+
+Editor.baseToolText1 = nil
+Editor.waypointToolText = nil
+Editor.esToolText = nil
+Editor.validToolText = nil
+
+Editor.quitText = nil
 
 -- ====================== EDITOR FUNCTIONS
 
@@ -90,11 +119,47 @@ function clearEditor()
     clearGUI()
 end
 
+local helpVisible = false
+function Editor:toggleHelpVisible()
+    if (helpVisible) then
+        self.controlsHeadingText = nil
+        self.controlsText = nil
+        self.controlsText2 = nil
+        self.controlsText3 = nil
+        self.controlsText4 = nil
+        self.controlsText5 = nil
+
+        self.baseToolText1 = nil
+        self.waypointToolText = nil
+        self.esToolText = nil
+        self.validToolText = nil
+        self.quitText = nil
+    else
+        self.controlsHeadingText = CText:new(20, 200, 600, 300, "Controls:", "Resources/Fonts/myfont.xml")
+        self.controlsText = CText:new(20, 250, 600, 50, "Press 1: Base Tool", "Resources/Fonts/myfont.xml")
+        self.controlsText2 = CText:new(20, 300, 600, 50, "Press 2: Waypoint Tool", "Resources/Fonts/myfont.xml")
+        self.controlsText3 = CText:new(20, 350, 600, 50, "Press 3: Enemy Spawn Tool", "Resources/Fonts/myfont.xml")
+        self.controlsText4 = CText:new(20, 400, 600, 50, "Press 4: Valid Tool", "Resources/Fonts/myfont.xml")
+        self.controlsText5 = CText:new(20, 450, 600, 50, "Press G: Toggle mouse cursor", "Resources/Fonts/myfont.xml")
+        
+        self.baseToolText1 = CText:new(20, 500, 600, 80, "Base Tool Controls:\nLMB (Place) / RMB (Remove)", "Resources/Fonts/myfont.xml")
+        
+        self.waypointToolText = CText:new(20, 580, 600, 80, "Waypoint Tool Controls:\nLMB (Place) / R (Reset)", "Resources/Fonts/myfont.xml")
+        
+        self.esToolText = CText:new(20, 660, 600, 80, "Enemy Spawn Tool Control:\nLMB (Start Wave)", "Resources/Fonts/myfont.xml")
+        
+        self.validToolText = CText:new(20, 740, 600, 80, "Valid Tool Controls:\nLMB (Set) / RMB (Remove) / R (Reset)", "Resources/Fonts/myfont.xml")
+        
+        self.quitText = CText:new(20, 820, 600, 80, "Press ESC: Go to Main Menu", "Resources/Fonts/myfont.xml")
+    end
+    helpVisible = not helpVisible
+
+end
+
 function Editor:start(xGridSet, zGridSet)
     worldGridSize.x = xGridSet
     worldGridSize.z = zGridSet
 
-    
     -- Init cells
     for i = 1, worldGridSize.x do
         for u = 1, worldGridSize.z do
@@ -111,8 +176,7 @@ end
 
 function Editor:run(dt)
     if (firstTime) then
-        -- Default wave time
-        Editor:submitWavePauseTime()
+        Editor:submitPartialLevel()
         firstTime = false
     end
 
@@ -136,6 +200,8 @@ function Editor:run(dt)
         cam:toggleActive()
         currentTool = "NoTool"
         toolText:setText(currentTool)
+    elseif (isKeyPressed("H")) then
+        self:toggleHelpVisible()
     end
     
     -- Enemy Spawn + Waypoint
@@ -237,7 +303,15 @@ function Editor:submitWave()
     orchestrator:setWaveData(self.waveList)
 end
 
-function Editor:submitWavePauseTime()
+function Editor:initPartialLevel(timeBetweenWaves, currency)
+    self.currTimeBetweenWaves = timeBetweenWaves
+    self.timeBetweenWavesText:setText(self.currTimeBetweenWaves)
+
+    self.currMoney = currency
+    self.currMoneyText:setText(self.currMoney)
+end
+
+function Editor:submitPartialLevel()
     if (orchestrator:isWaveSystemRunning()) then log("Wait until the enemy is done spawning..") return end 
     orchestrator:setWavePauseTime(self.currTimeBetweenWaves)
 end
@@ -252,14 +326,17 @@ function Editor:handleScrollbarEvent(guiID, value)
     elseif (guiID == 5) then
         self.currSpawnInterval = value / 10
         self.spawnIntervalText:setText(self.currSpawnInterval)
+    elseif (guiID == 999) then
+        self.currMoney = value
+        self.currMoneyText:setText(self.currMoney)
     end
 end
 
 function Editor:handleButtonClickEvent(guiID)
     if (guiID == 1) then
         -- Submit the levels wave pause time
-        log("The levels wave pause time now set to " .. self.currTimeBetweenWaves .. " seconds")  
-        self:submitWavePauseTime(self.currTimeBetweenWaves)
+        log("The levels wave pause time now set to " .. self.currTimeBetweenWaves .. " seconds and starting currency to " .. tostring(self.currMoney))  
+        self:submitPartialLevel()
     elseif (guiID == 50) then
         -- Submit list to Orchestrator
         log("Waves have been submitted!")

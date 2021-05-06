@@ -49,7 +49,7 @@ function MainMenu:hideGUI()
 end
 
 function MainMenu:run(dt)
-    
+   -- We can do some cool text animation GUIs on the background :D 
 end
 
 function MainMenu:handleScrollbarEvent(guiID, value)
@@ -73,9 +73,9 @@ function MainMenu:handleButtonClickEvent(guiID)
         if (lastFilePathSelected == "") then log("Please select a file..") return end
         gameState = "Play"
         log("Game started")
-        startGame()
-
-        self:hideGUI()
+        local statusGood = startGame()
+        if (statusGood) then self:hideGUI() 
+        else gameState = "Menu" end
 
     -- Edit
     elseif (guiID == 701) then

@@ -69,6 +69,7 @@ function EnemyOrchestrator:update(dt)
         -- If done --> Try to spawn new wave
         if (waveDone) then
             self.wavePauseTimer = self.wavePauseTimer + dt
+            --print(self.wavePauseTimer)
 
             if (self.wavePauseTimer > self.levelWavePauseTime) then
                 self.wavePauseTimer = 0

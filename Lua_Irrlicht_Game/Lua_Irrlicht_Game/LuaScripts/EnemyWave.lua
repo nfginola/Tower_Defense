@@ -8,7 +8,7 @@ function EnemyWave:new(spawnInterval, enemyCount, spawnCellID)
         enemyLeft = enemyCount,
         spawnPosition = cells[spawnCellID]:getPosition(),
         
-        spawnTimer = 0
+        spawnTimer = spawnInterval + 1
     }
 
     self.__index = self

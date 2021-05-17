@@ -14,7 +14,6 @@ std::wstring s2ws(const std::string& s)
     return r;
 }
 
-
 namespace luaF
 {
     static int s_GUI_idstart = 101;
@@ -882,7 +881,7 @@ namespace luaF
         return 0;
     }
 
-    // Editbox
+
     int createEditbox(lua_State* L)  
     {
         float topLeftX = lua_tonumber(L, -4);
@@ -947,8 +946,8 @@ vector3df LinInterpMover::Update(float dt, const std::string& id)
 
     vector3df newPos;
 
-    // StartPos is starting point and (endPos - startPos) is the direction of movement where the rate of change of the magnitude is linearly proportional to
-    // currTime/maxTime
+    // StartPos is starting point and (endPos - startPos) is the direction of movement where the rate of change of the 
+    // magnitude is linearly proportional to (currTime/maxTime)
     if (currTime >= maxTime)
     {
         newPos = endPos;
@@ -965,23 +964,23 @@ vector3df LinInterpMover::Update(float dt, const std::string& id)
 
             bool succeeded = lua_toboolean(luaF::s_L, -1);
             
-            // If coroutine died, don't update anymore
+            // If coroutine died, don't update movement anymore
             if (!succeeded)
             {
-                std::cout << "Dead\n";
                 currTime = 0.f;
                 maxTime = -1.f;
                 dead = true;
             }
         }
     }
-    // Below checks are used to stop the interpolation on the final waypoint
     else if (!done)
     {
+        // Normal interp
         newPos = startPos + (endPos - startPos) * (currTime / maxTime);
     }
     else if (done)
     {
+        // Set at end
         newPos = endPos;
     }
 

@@ -79,6 +79,8 @@ public:
 
         else if (key == "ESC") return IsKeyDown(KEY_ESCAPE);
 
+        else return false;
+
     }
 
     bool isKeyPressed(const std::string& key)
@@ -126,6 +128,8 @@ public:
         else if (key == "LShift") return keyPressedHelper(KEY_LSHIFT);
 
         else if (key == "ESC") return keyPressedHelper(KEY_ESCAPE);
+
+        else return false;
     }
 
     bool isLMBPressed()
@@ -244,9 +248,6 @@ struct GUIEditbox
 };
 
 
-
-
-
 class Game
 {
 public:
@@ -264,9 +265,6 @@ private:
 private:
     bool m_luaShouldReset = false;
 	lua_State* L = nullptr;
-    
-    // For newly created state
-    lua_State* Ltmp = nullptr;
 
 	// Irrlicht managers
 	IrrlichtDevice* m_dev = nullptr;
@@ -275,10 +273,6 @@ private:
 	IGUIEnvironment* m_guiEnv = nullptr;
 	ISceneCollisionManager* m_collMan = nullptr;
     EventReceiver m_evRec;
-
-    // Cam
-	ICameraSceneNode* m_mainCam = nullptr;
-    ISceneNode* highlightedSceneNode = nullptr;
 
     // FPS
     u32 then;

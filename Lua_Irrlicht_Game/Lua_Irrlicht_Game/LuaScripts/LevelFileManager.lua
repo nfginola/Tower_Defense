@@ -82,7 +82,6 @@ end
 function LevelFileManager:saveToFile()
     if (self.currentSaveFileName == "") then log("Please enter a name for your level file to save!") return end
 
-    -- place in a "Levels" directory
     local completeFileName = self.currentSaveFileName .. ".level"
 
     local file = io.open(completeFileName, "w+")
@@ -112,7 +111,6 @@ function LevelFileManager:saveToFile()
     end
     io.write("waveE\n")
 
-    -- why is FILE nil?
     io.close(file)
 
     self.data.waveData = {}

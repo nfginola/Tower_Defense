@@ -103,14 +103,10 @@ function Enemy:takeDamage(damage)
     self.health = self.health - damage
     --print("[" .. self.id .. "] has taken damage! HP left: " .. self.health .. "\n")
 
-    -- visual feedback for damage (scale halved each time!)
+    -- goes towards 0.5 scale
     local hpFac = self.health / self.maxHealth  -- [1, 0]
     hpFac = hpFac * 0.5 -- [0.5, 0]
     hpFac = hpFac + 0.5 -- [1, 0.5]
-
-    -- interps from baseScale to half of baseScale as it gets to 0 HP
-    -- print(self.id .. ": ")
-    -- print(self.baseScale)
 
     -- print("before:", self.id, ":", self.baseScale)
 

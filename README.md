@@ -10,4 +10,5 @@ Simple game made in Irrlicht Game Engine and Lua scripting language.
 ![Alt text](/tower_def_1.png?raw=true "Gameplay")  
   
 - In Editor  
-![Alt text](/tower_def_2.png?raw=true "Editor")  
+![Alt text](/tower_def_2.png?raw=true "Editor1")  
+![Alt text](/tower_def_3.png?raw=true "Editor2")  

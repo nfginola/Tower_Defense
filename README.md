@@ -1,2 +1,3 @@
 # Tower_Defense
-Game using Irrlicht and Lua
+
+Simple Tower Defense game with in-game Editor to create your own levels using Irrlicht Game Engine and Lua scripting language.

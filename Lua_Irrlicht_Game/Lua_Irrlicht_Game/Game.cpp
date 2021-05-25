@@ -1276,11 +1276,12 @@ void Game::ResetLuaState()
         { NULL, NULL }
         };
 
+
         luaL_setfuncs(L, funcRegs, 0);
         lua_pushvalue(L, -1);
-
         lua_setfield(L, -1, "__index");
         lua_setglobal(L, "CWorldObject");    // set the configured metatable to "CWorldObject"
+
     }
 
     // Register Camera representation
